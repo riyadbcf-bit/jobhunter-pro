@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JobHunter Pro</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0c2340;--navy-light:#1a3a5c;--accent:#2d7dd2;--bg:#f5f7fa;--border:rgba(0,0,0,0.1);--text:#1a1a2e;--muted:#6b7280}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+.sidebar{background:var(--navy);color:#fff;display:flex;flex-direction:column;padding:0}
+.logo{padding:18px 16px;font-size:15px;font-weight:700;border-bottom:1px solid rgba(255,255,255,0.1)}
+.logo span{color:#60a5fa}
+.nav-s{padding:10px 8px 2px;font-size:10px;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:.8px;margin-left:8px}
+.nav-i{display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer;font-size:13px;color:rgba(255,255,255,0.7);border-radius:6px;margin:1px 8px;transition:.15s}
+.nav-i:hover,.nav-i.on{background:rgba(255,255,255,0.1);color:#fff}
+.nav-i.on{background:rgba(45,125,210,0.3);color:#93c5fd}
+.main{display:flex;flex-direction:column}
+.topbar{background:#fff;border-bottom:1px solid var(--border);padding:0 20px;height:54px;display:flex;align-items:center;justify-content:space-between}
+.topbar-t{font-size:15px;font-weight:600;color:var(--navy)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 13px;border-radius:6px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border);background:#fff;color:var(--text);transition:.15s}
+.btn:hover{background:#f1f5f9}
+.btn-p{background:var(--navy);color:#fff;border-color:var(--navy)}
+.btn-p:hover{background:var(--navy-light)}
+.btn-s{background:#dcfce7;color:#15803d;border-color:#86efac}
+.btn-sm{padding:4px 9px;font-size:12px}
+.content{flex:1;overflow-y:auto;padding:20px}
+.page{display:none}.page.on{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.card{background:#fff;border:1px solid var(--border);border-radius:10px;padding:14px}
+.card-t{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px}
+.sc{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.sc-l{font-size:11px;color:var(--muted);font-weight:500;margin-bottom:3px}
+.sc-v{font-size:22px;font-weight:700;color:var(--navy)}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.bb{background:#dbeafe;color:#1d4ed8}.bg{background:#dcfce7;color:#15803d}.bo{background:#fed7aa;color:#c2410c}.br{background:#fee2e2;color:#dc2626}.bgr{background:#f1f5f9;color:#475569}.bpu{background:#ede9fe;color:#7c3aed}
+.ag{border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:8px}
+.ag-h{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:#f8fafc;cursor:pointer}
+.ag-hl{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:500}
+.ag-b{padding:12px;border-top:1px solid var(--border);display:none}
+.ag-b.op{display:block}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#d1d5db}
+.dot.run{background:#f59e0b;animation:pulse 1s infinite}
+.dot.done{background:#16a34a}
+.dot.err{background:#dc2626}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+textarea,input[type=text],input[type=email],select{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;color:var(--text);font-family:inherit;outline:none;transition:.15s}
+textarea:focus,input:focus,select:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:75px}
+label{font-size:12px;font-weight:500;color:var(--muted);display:block;margin-bottom:3px;margin-top:10px}
+label:first-child{margin-top:0}
+.fr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tag{display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:12px;margin:2px}
+.tiw{border:1px solid var(--border);border-radius:6px;padding:5px;display:flex;flex-wrap:wrap;gap:2px;background:#fff;min-height:36px}
+.tiw input{border:none;outline:none;font-size:13px;padding:2px 4px;flex:1;min-width:100px;background:transparent}
+.aio{background:#f8fafc;border:1px solid var(--border);border-radius:6px;padding:10px;font-size:13px;line-height:1.6;white-space:pre-wrap;min-height:50px;max-height:300px;overflow-y:auto}
+.ld::after{content:'...';animation:d 1.2s infinite}
+@keyframes d{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
+.notif{position:fixed;bottom:18px;right:18px;background:var(--navy);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:200;opacity:0;transition:.3s;pointer-events:none}
+.notif.show{opacity:1}
+.es{text-align:center;padding:30px 16px;color:var(--muted)}
+.es i{font-size:32px;margin-bottom:8px;display:block}
+.sec-t{font-size:15px;font-weight:600;color:var(--navy);margin-bottom:14px}
+.ib{background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px;font-size:12px;color:#1e40af}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.tab{padding:7px 13px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s}
+.tab.on{color:var(--navy);border-bottom-color:var(--navy)}
+.tabs{display:flex;gap:2px;border-bottom:2px solid #e2e8f0;margin-bottom:14px}
+.da{border:2px dashed var(--border);border-radius:8px;padding:20px;text-align:center;color:var(--muted);font-size:13px;cursor:pointer}
+.da:hover{border-color:var(--accent)}
+.pc{background:#f8fafc;border-radius:8px;padding:10px;flex:1;min-width:150px}
+.pc-t{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+.pi{background:#fff;border:1px solid var(--border);border-radius:6px;padding:9px;margin-bottom:7px;font-size:12px}
+.pi-t{font-weight:600;color:var(--navy);margin-bottom:2px}
+.sc-r{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+.sh{background:#dcfce7;color:#15803d}.sm{background:#fed7aa;color:#c2410c}.sl{background:#fee2e2;color:#dc2626}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="sidebar">
+  <div class="logo"><i class="ti ti-briefcase" style="margin-right:8px"></i>Job<span>Hunter</span> Pro</div>
+  <div class="nav-s">Principal</div>
+  <div class="nav-i on" onclick="P('dash')" id="n-dash"><i class="ti ti-layout-dashboard"></i>Tableau de bord</div>
+  <div class="nav-i" onclick="P('profil')" id="n-profil"><i class="ti ti-user-circle"></i>Mon profil</div>
+  <div class="nav-s">Candidatures</div>
+  <div class="nav-i" onclick="P('offres')" id="n-offres"><i class="ti ti-search"></i>Analyser offres</div>
+  <div class="nav-i" onclick="P('gen')" id="n-gen"><i class="ti ti-file-text"></i>Générer docs</div>
+  <div class="nav-i" onclick="P('email')" id="n-email"><i class="ti ti-mail"></i>Email contact</div>
+  <div class="nav-s">Suivi</div>
+  <div class="nav-i" onclick="P('pipe')" id="n-pipe"><i class="ti ti-columns"></i>Pipeline</div>
+  <div style="flex:1"></div>
+  <div style="padding:10px 14px;font-size:10px;color:rgba(255,255,255,0.25);border-top:1px solid rgba(255,255,255,0.06)">v1.0 — 5 agents IA</div>
+</nav>
+<div class="main">
+<div class="topbar">
+  <span class="topbar-t" id="pt">Tableau de bord</span>
+  <div style="display:flex;gap:7px">
+    <button class="btn btn-sm" onclick="P('profil')"><i class="ti ti-settings"></i>Profil</button>
+    <button class="btn btn-p btn-sm" onclick="P('offres')"><i class="ti ti-plus"></i>Analyser</button>
+  </div>
+</div>
+<div class="content">
+
+<div class="page on" id="pg-dash">
+  <div class="g4" style="margin-bottom:18px">
+    <div class="sc"><div class="sc-l">Offres analysées</div><div class="sc-v" id="s-off">0</div></div>
+    <div class="sc"><div class="sc-l">CV générés</div><div class="sc-v" id="s-cv">0</div></div>
+    <div class="sc"><div class="sc-l">Emails rédigés</div><div class="sc-v" id="s-em">0</div></div>
+    <div class="sc"><div class="sc-l">Candidatures actives</div><div class="sc-v" id="s-ca">0</div></div>
+  </div>
+  <div class="g2">
+    <div class="card"><div class="card-t">Dernières offres</div><div id="d-off"><div class="es"><i class="ti ti-search"></i>Aucune offre.</div></div></div>
+    <div class="card"><div class="card-t">Activité récente</div><div id="d-act"><div class="es"><i class="ti ti-activity"></i>Aucune activité.</div></div></div>
+  </div>
+</div>
+
+<div class="page" id="pg-profil">
+  <div class="sec-t">Mon profil de base</div>
+  <div class="ib" style="margin-bottom:14px">Ces infos sont utilisées par tous les agents. Sauvegardez après modification.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-t">Informations personnelles</div>
+      <label>Nom complet</label><input type="text" id="p-nom" placeholder="Riyad Bencheikh">
+      <label>Email</label><input type="text" id="p-email" placeholder="email@exemple.com">
+      <label>Téléphone</label><input type="text" id="p-tel" placeholder="+33 6 XX XX XX XX">
+      <label>Ville</label><input type="text" id="p-ville" placeholder="Montfermeil, 93370">
+      <label>LinkedIn</label><input type="text" id="p-linkedin" placeholder="linkedin.com/in/...">
+      <label>Poste recherché</label><input type="text" id="p-poste" placeholder="Alternance Comptabilité Immobilier">
+    </div>
+    <div class="card">
+      <div class="card-t">Formation</div>
+      <label>Diplôme</label><input type="text" id="p-dip" placeholder="DCG — Diplôme de Comptabilité et de Gestion">
+      <label>École</label><input type="text" id="p-ech" placeholder="Établissement">
+      <label>Année</label><input type="text" id="p-an" placeholder="Dernière année — 2025">
+      <label>Axes DCG</label>
+      <div class="chips" id="ax-chips"></div>
+      <div style="display:flex;gap:5px;margin-top:5px"><input type="text" id="ax-in" placeholder="Ajouter axe..." style="flex:1"><button class="btn btn-sm" onclick="addAxe()">+</button></div>
+    </div>
+  </div>
+  <div class="g2" style="margin-top:14px">
+    <div class="card">
+      <div class="card-t">Expériences</div>
+      <div id="exp-list"></div>
+      <button class="btn btn-sm" style="margin-top:7px;width:100%" onclick="addExp()"><i class="ti ti-plus"></i>Ajouter</button>
+    </div>
+    <div class="card">
+      <div class="card-t">Logiciels & compétences</div>
+      <label>Logiciels</label>
+      <div class="tiw" id="log-w" onclick="document.getElementById('log-in').focus()"><input type="text" id="log-in" placeholder="Entrée pour ajouter..." onkeydown="addT(event,'log')"></div>
+      <label>Langues</label>
+      <div class="tiw" id="lng-w" onclick="document.getElementById('lng-in').focus()"><input type="text" id="lng-in" placeholder="Français (natif)..." onkeydown="addT(event,'lng')"></div>
+      <label>Compétences</label>
+      <div class="tiw" id="cmp-w" onclick="document.getElementById('cmp-in').focus()"><input type="text" id="cmp-in" placeholder="Comptabilité générale..." onkeydown="addT(event,'cmp')"></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="card-t">Accroche professionnelle</div>
+    <textarea id="p-bio" rows="4" placeholder="Votre profil en 3-4 phrases..."></textarea>
+  </div>
+  <div style="display:flex;gap:7px;margin-top:14px">
+    <button class="btn btn-p" onclick="saveP()"><i class="ti ti-device-floppy"></i>Sauvegarder</button>
+    <button class="btn" onclick="loadDef()"><i class="ti ti-refresh"></i>Profil par défaut</button>
+  </div>
+</div>
+
+<div class="page" id="pg-offres">
+  <div class="sec-t">Analyser des offres</div>
+  <div class="tabs">
+    <div class="tab on" id="t-imp" onclick="switchTab('imp')">Coller texte</div>
+    <div class="tab" id="t-csv" onclick="switchTab('csv')">CSV</div>
+    <div class="tab" id="t-br" onclick="switchTab('br')">Via navigateur</div>
+  </div>
+  <div id="imp-p">
+    <div class="card">
+      <label>Texte ou URL de l'offre (LinkedIn, Indeed, HelloWork...)</label>
+      <textarea id="off-in" rows="6" placeholder="Collez le texte complet de l'offre ici..."></textarea>
+      <div style="display:flex;gap:7px;margin-top:9px">
+        <button class="btn btn-p" onclick="analyser()"><i class="ti ti-cpu"></i>Analyser avec l'IA</button>
+        <button class="btn" onclick="document.getElementById('off-in').value=''"><i class="ti ti-x"></i>Effacer</button>
+      </div>
+    </div>
+  </div>
+  <div id="csv-p" style="display:none">
+    <div class="card">
+      <label>Fichier CSV (Web Scraper export)</label>
+      <div class="da" onclick="document.getElementById('csv-f').click()"><i class="ti ti-table-import" style="font-size:26px;margin-bottom:6px;display:block"></i>Cliquer pour importer CSV<br><small>Colonnes: titre, entreprise, lieu, url</small></div>
+      <input type="file" id="csv-f" accept=".csv" style="display:none" onchange="importCSV(event)">
+    </div>
+  </div>
+  <div id="br-p" style="display:none">
+    <div class="card">
+      <div class="fr">
+        <div><label>Plateforme</label><select id="br-pl"><option value="indeed">Indeed</option><option value="linkedin">LinkedIn</option><option value="hellowork">HelloWork</option></select></div>
+        <div><label>Périmètre</label><select id="br-km"><option value="10">10 km</option><option value="20">20 km</option><option value="30">30 km</option><option value="50">50 km</option></select></div>
+      </div>
+      <label>Mots-clés</label>
+      <input type="text" id="br-kw" placeholder="alternance comptabilité immobilier Paris">
+      <button class="btn btn-p" style="margin-top:9px" onclick="openPlatform()"><i class="ti ti-world-search"></i>Ouvrir la plateforme</button>
+    </div>
+  </div>
+  <div id="off-res" style="margin-top:14px"></div>
+</div>
+
+<div class="page" id="pg-gen">
+  <div class="sec-t">Générer CV + Lettre de motivation</div>
+  <div class="card" style="margin-bottom:14px">
+    <label>Offre cible</label>
+    <textarea id="g-off" rows="4" placeholder="Collez ou sélectionnez une offre..."></textarea>
+    <label>Entreprise</label><input type="text" id="g-ent" placeholder="Nom de l'entreprise">
+    <label>Notes (optionnel)</label><textarea id="g-not" rows="2" placeholder="Points à valoriser..."></textarea>
+  </div>
+  <div class="ag" id="ag1">
+    <div class="ag-h" onclick="tA('ag1')">
+      <div class="ag-hl"><div class="dot" id="d1"></div><i class="ti ti-scan"></i>Agent 1 — Analyse de l'offre</div>
+      <i class="ti ti-chevron-down"></i>
+    </div>
+    <div class="ag-b" id="b1">
+      <div class="aio" id="o1">En attente...</div>
+      <div style="display:flex;gap:7px;margin-top:9px">
+        <button class="btn btn-s btn-sm" id="v1" onclick="runA(2)" disabled><i class="ti ti-check"></i>Valider</button>
+        <button class="btn btn-sm" onclick="editA(1)"><i class="ti ti-edit"></i>Modifier</button>
+      </div>
+    </div>
+  </div>
+  <div class="ag" id="ag2">
+    <div class="ag-h" onclick="tA('ag2')">
+      <div class="ag-hl"><div class="dot" id="d2"></div><i class="ti ti-percentage"></i>Agent 2 — Score de matching</div>
+      <i class="ti ti-chevron-down"></i>
+    </div>
+    <div class="ag-b" id="b2">
+      <div class="aio" id="o2">En attente agent 1...</div>
+      <div style="display:flex;gap:7px;margin-top:9px">
+        <button class="btn btn-s btn-sm" id="v2" onclick="runA(3)" disabled><i class="ti ti-check"></i>Valider</button>
+        <button class="btn btn-sm" onclick="editA(2)"><i class="ti ti-edit"></i>Modifier</button>
+      </div>
+    </div>
+  </div>
+  <div class="ag" id="ag3">
+    <div class="ag-h" onclick="tA('ag3')">
+      <div class="ag-hl"><div class="dot" id="d3"></div><i class="ti ti-file-cv"></i>Agent 3 — CV + Lettre</div>
+      <i class="ti ti-chevron-down"></i>
+    </div>
+    <div class="ag-b" id="b3">
+      <div class="aio" id="o3">En attente agent 2...</div>
+      <div id="ga" style="display:none;margin-top:9px;display:none">
+        <button class="btn btn-p btn-sm" onclick="dlPDF('cv')"><i class="ti ti-download"></i>CV PDF</button>
+        <button class="btn btn-p btn-sm" onclick="dlPDF('lm')"><i class="ti ti-download"></i>Lettre PDF</button>
+        <button class="btn btn-sm" onclick="runA(4)"><i class="ti ti-arrow-right"></i>Contrôle qualité</button>
+      </div>
+    </div>
+  </div>
+  <div class="ag" id="ag4">
+    <div class="ag-h" onclick="tA('ag4')">
+      <div class="ag-hl"><div class="dot" id="d4"></div><i class="ti ti-shield-check"></i>Agent 4 — Contrôle qualité</div>
+      <i class="ti ti-chevron-down"></i>
+    </div>
+    <div class="ag-b" id="b4">
+      <div class="aio" id="o4">En attente agent 3...</div>
+      <div style="margin-top:9px">
+        <button class="btn btn-s btn-sm" id="v4" onclick="finalize()" disabled><i class="ti ti-check"></i>Valider candidature</button>
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:10px"><button class="btn btn-p" onclick="runA(1)"><i class="ti ti-player-play"></i>Lancer tous les agents</button></div>
+</div>
+
+<div class="page" id="pg-email">
+  <div class="sec-t">Agent 5 — Email de contact</div>
+  <div class="card" style="margin-bottom:14px">
+    <label>Entreprise</label><input type="text" id="em-ent" placeholder="Sogenial Immobilier...">
+    <label>Site web</label><input type="text" id="em-sit" placeholder="https://www.entreprise.fr">
+    <button class="btn btn-p" style="margin-top:9px" onclick="findContact()"><i class="ti ti-search"></i>Rechercher un contact</button>
+  </div>
+  <div id="ct-res" style="margin-bottom:14px"></div>
+  <div class="card">
+    <div class="card-t">Email rédigé par l'IA</div>
+    <label>Destinataire</label><input type="email" id="em-to" placeholder="contact@entreprise.fr">
+    <label>Objet</label><input type="text" id="em-sub" placeholder="Candidature alternance — Riyad Bencheikh">
+    <label>Message</label><textarea id="em-bod" rows="9" placeholder="L'email sera généré par l'IA..."></textarea>
+    <div style="display:flex;gap:7px;margin-top:9px">
+      <button class="btn btn-p" onclick="genEmail()"><i class="ti ti-cpu"></i>Générer</button>
+      <button class="btn btn-s" onclick="openMail()"><i class="ti ti-mail-forward"></i>Ouvrir dans Mail</button>
+      <button class="btn" onclick="navigator.clipboard.writeText(document.getElementById('em-sub').value+'\n\n'+document.getElementById('em-bod').value).then(()=>ntf('Copié !','ok'))"><i class="ti ti-copy"></i>Copier</button>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="pg-pipe">
+  <div class="sec-t">Pipeline de candidatures</div>
+  <div style="display:flex;gap:10px;overflow-x:auto;padding-bottom:6px">
+    <div class="pc"><div class="pc-t">À postuler</div><div id="c-ap"></div><div class="es" id="e-ap" style="font-size:11px;padding:16px 8px"><i class="ti ti-inbox"></i>Vide</div></div>
+    <div class="pc"><div class="pc-t">Postulé</div><div id="c-po"></div><div class="es" id="e-po" style="font-size:11px;padding:16px 8px"><i class="ti ti-inbox"></i>Vide</div></div>
+    <div class="pc"><div class="pc-t">Relance</div><div id="c-re"></div><div class="es" id="e-re" style="font-size:11px;padding:16px 8px"><i class="ti ti-inbox"></i>Vide</div></div>
+    <div class="pc"><div class="pc-t">Entretien</div><div id="c-en"></div><div class="es" id="e-en" style="font-size:11px;padding:16px 8px"><i class="ti ti-inbox"></i>Vide</div></div>
+    <div class="pc"><div class="pc-t">Refus</div><div id="c-rf"></div><div class="es" id="e-rf" style="font-size:11px;padding:16px 8px"><i class="ti ti-inbox"></i>Vide</div></div>
+  </div>
+</div>
+
+</div></div></div>
+<div class="notif" id="notif"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const TT={dash:'Tableau de bord',profil:'Mon profil',offres:'Analyser offres',gen:'Générer docs',email:'Email contact',pipe:'Pipeline'};
+let S={offs:[],cands:[],ao:{},prof:null,st:{off:0,cv:0,em:0,ca:0},tags:{log:[],lng:[],cmp:[]},axes:[]};
+function P(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('on'));document.querySelectorAll('.nav-i').forEach(x=>x.classList.remove('on'));document.getElementById('pg-'+p).classList.add('on');document.getElementById('n-'+p).classList.add('on');document.getElementById('pt').textContent=TT[p]}
+function switchTab(t){document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));document.getElementById('t-'+t).classList.add('on');['imp-p','csv-p','br-p'].forEach(id=>document.getElementById(id).style.display='none');document.getElementById(t+'-p').style.display='block'}
+function tA(id){document.getElementById('b'+id.slice(2)).classList.toggle('op')}
+function ntf(m,t=''){const n=document.getElementById('notif');n.textContent=m;n.style.background=t==='ok'?'#15803d':t==='err'?'#dc2626':'#0c2340';n.classList.add('show');setTimeout(()=>n.classList.remove('show'),3000)}
+function addT(e,t){if(e.key==='Enter'&&e.target.value.trim()){const v=e.target.value.trim();S.tags[t].push(v);const w=document.getElementById(t+'-w');const tg=document.createElement('span');tg.className='tag';tg.innerHTML=v+'<i class="ti ti-x" onclick="rmT(this,\''+t+'\',\''+v+'\')"></i>';w.insertBefore(tg,document.getElementById(t+'-in'));e.target.value=''}}
+function rmT(el,t,v){S.tags[t]=S.tags[t].filter(x=>x!==v);el.parentElement.remove()}
+function addAxe(){const i=document.getElementById('ax-in');const v=i.value.trim();if(!v)return;S.axes.push(v);const c=document.createElement('span');c.className='badge bb';c.style.cssText='cursor:pointer;margin:2px';c.textContent=v;c.onclick=()=>{S.axes=S.axes.filter(a=>a!==v);c.remove()};document.getElementById('ax-chips').appendChild(c);i.value=''}
+function addExp(){const id='x'+Date.now();const d=document.createElement('div');d.className='card';d.style.marginBottom='7px';d.id=id;d.innerHTML='<div class="fr"><div><label>Poste</label><input type="text" placeholder="Alternant comptable"></div><div><label>Entreprise</label><input type="text" placeholder="Entreprise"></div></div><div class="fr" style="margin-top:7px"><div><label>Durée</label><input type="text" placeholder="Sept 2022–Août 2024"></div><div><label>Type</label><select><option>Alternance</option><option>Stage</option><option>CDI</option><option>CDD</option></select></div></div><textarea style="margin-top:7px" rows="2" placeholder="Missions..."></textarea><button class="btn btn-sm" style="margin-top:5px;background:#fee2e2;color:#dc2626;border-color:#fca5a5" onclick="document.getElementById(\''+id+'\').remove()"><i class="ti ti-trash"></i> Suppr.</button>';document.getElementById('exp-list').appendChild(d)}
+function gP(){return S.prof||JSON.parse(localStorage.getItem('jh_p')||'{}')||{}}
+function saveP(){S.prof={nom:document.getElementById('p-nom').value,email:document.getElementById('p-email').value,tel:document.getElementById('p-tel').value,ville:document.getElementById('p-ville').value,linkedin:document.getElementById('p-linkedin').value,poste:document.getElementById('p-poste').value,diplome:document.getElementById('p-dip').value,ecole:document.getElementById('p-ech').value,annee:document.getElementById('p-an').value,bio:document.getElementById('p-bio').value,log:[...S.tags.log],lng:[...S.tags.lng],cmp:[...S.tags.cmp],axes:[...S.axes]};try{localStorage.setItem('jh_p',JSON.stringify(S.prof))}catch(e){}ntf('Profil sauvegardé !','ok')}
+function loadDef(){const d={nom:'Riyad Bencheikh',email:'',tel:'',ville:'Montfermeil, 93370',linkedin:'',poste:'Alternance Comptabilité Immobilier (SCPI, SCI, OPPCI)',diplome:'DCG — Diplôme de Comptabilité et de Gestion',ecole:'',annee:'Dernière année — 2025',bio:"Étudiant en DCG dernière année, 3 ans d'expérience alternance : 2 ans comptabilité entreprise (L'École Multimédia) + 1 an fonds PE cabinet Aplitec (FCPI, SLP, FCT, FCPR, OPC). Passionné par la comptabilité immobilière.",log:['Sage Génération Expert','Ciel Compta','Fulll','Dext','Sage Paie','Factofrance'],lng:['Français (natif)','Anglais (professionnel)','Espagnol (opérationnel)'],cmp:['Comptabilité générale','Fonds PE','Clôture comptes','Déclarations fiscales','Trésorerie'],axes:['Comptabilité & Finance','Droit & Fiscalité','Management & SI','Communication & Anglais']};
+['p-nom','p-ville','p-poste','p-dip','p-an','p-bio'].forEach(id=>{const map={'p-nom':'nom','p-ville':'ville','p-poste':'poste','p-dip':'diplome','p-an':'annee','p-bio':'bio'};document.getElementById(id).value=d[map[id]]||''});
+S.tags={log:[...d.log],lng:[...d.lng],cmp:[...d.cmp]};S.axes=[...d.axes];
+['log','lng','cmp'].forEach(t=>{const w=document.getElementById(t+'-w');w.querySelectorAll('.tag').forEach(x=>x.remove());d[t=='log'?'log':t=='lng'?'lng':'cmp'].forEach(v=>{const tg=document.createElement('span');tg.className='tag';tg.innerHTML=v+'<i class="ti ti-x" onclick="rmT(this,\''+t+'\',\''+v+'\')"></i>';w.insertBefore(tg,document.getElementById(t+'-in'))})});
+const chips=document.getElementById('ax-chips');chips.innerHTML='';d.axes.forEach(v=>{const c=document.createElement('span');c.className='badge bb';c.style.cssText='cursor:pointer;margin:2px';c.textContent=v;c.onclick=()=>{S.axes=S.axes.filter(a=>a!==v);c.remove()};chips.appendChild(c)});
+ntf('Profil par défaut chargé !','ok')}
+async function claude(prompt){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});if(!r.ok)throw new Error('API '+r.status);const d=await r.json();return d.content.map(i=>i.text||'').join('\n')}
+async function analyser(){const tx=document.getElementById('off-in').value.trim();if(!tx){ntf('Entrez une offre','err');return}const btn=document.querySelector('#imp-p .btn-p');btn.disabled=true;
+try{const res=await claude('Retourne UNIQUEMENT ce JSON (pas markdown) pour cette offre :\n{"titre":"","entreprise":"","lieu":"","type_contrat":"","secteur":"","competences_requises":[],"logiciels":[],"points_cles":""}\nOffre: '+tx);let data;try{data=JSON.parse(res.replace(/```json|```/g,'').trim())}catch(e){data={titre:'Offre',entreprise:'',lieu:'',type_contrat:'',secteur:'',competences_requises:[],logiciels:[],points_cles:res}}
+data.tx=tx;S.offs.unshift(data);S.st.off++;document.getElementById('s-off').textContent=S.st.off;affOff();act('Offre analysée: '+(data.titre||'')+(data.entreprise?' — '+data.entreprise:''));ntf('Offre analysée !','ok');document.getElementById('off-in').value=''}catch(e){ntf('Erreur: '+e.message,'err')}
+btn.disabled=false}
+function score(o){const p=gP();let s=50;const comps=[...(p.cmp||[]),...(p.log||[])].map(x=>x.toLowerCase());(o.competences_requises||[]).forEach(c=>{if(comps.some(pc=>pc.includes(c.toLowerCase())||c.toLowerCase().includes(pc)))s+=5});(o.logiciels||[]).forEach(l=>{if(comps.some(pc=>pc.includes(l.toLowerCase())))s+=5});if((p.poste||'').toLowerCase().includes('immobilier')&&(o.secteur||'').toLowerCase().includes('immobilier'))s+=15;return Math.min(98,Math.max(20,s))}
+function affOff(){const el=document.getElementById('off-res');const dl=document.getElementById('d-off');if(!S.offs.length){el.innerHTML='';return}el.innerHTML='<div class="sec-t" style="margin-top:6px">'+S.offs.length+' offre'+(S.offs.length>1?'s':'')+' analysée'+(S.offs.length>1?'s':'')+'</div>';dl.innerHTML='';
+S.offs.slice(0,10).forEach((o,i)=>{const sc=score(o);const cls=sc>=75?'sh':sc>=50?'sm':'sl';const c=document.createElement('div');c.style.cssText='border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:9px;background:#fff';
+c.innerHTML='<div style="display:flex;gap:10px;align-items:flex-start"><div class="sc-r '+cls+'">'+sc+'%</div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--navy)">'+(o.titre||'Poste')+'</div><div style="font-size:12px;color:var(--muted);margin-bottom:5px">'+(o.entreprise||'')+(o.lieu?' · '+o.lieu:'')+'</div><div style="display:flex;gap:5px;flex-wrap:wrap">'+(o.type_contrat?'<span class="badge bb">'+o.type_contrat+'</span>':'')+(o.secteur?'<span class="badge bpu">'+o.secteur+'</span>':'')+'</div></div></div><div style="display:flex;gap:6px;margin-top:9px"><button class="btn btn-p btn-sm" onclick="selOff('+i+')"><i class="ti ti-file-text"></i>Générer docs</button><button class="btn btn-sm" onclick="addPipe('+i+')"><i class="ti ti-plus"></i>Pipeline</button></div>';
+el.appendChild(c);if(i<3){const m=document.createElement('div');m.style.cssText='display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)';m.innerHTML='<div class="sc-r '+cls+'" style="width:30px;height:30px;font-size:11px">'+sc+'%</div><div><div style="font-size:13px;font-weight:500">'+(o.titre||'Poste')+'</div><div style="font-size:11px;color:var(--muted)">'+(o.entreprise||'')+'</div></div>';dl.appendChild(m)}})}
+function selOff(i){const o=S.offs[i];document.getElementById('g-off').value=o.tx||[o.titre,o.entreprise,o.lieu,o.points_cles].filter(Boolean).join('\n');document.getElementById('g-ent').value=o.entreprise||'';P('gen');ntf('Offre sélectionnée !','ok')}
+function addPipe(i){const o=S.offs[i];S.cands.push({titre:o.titre,ent:o.entreprise,st:'ap',date:new Date().toLocaleDateString('fr-FR')});S.st.ca++;document.getElementById('s-ca').textContent=S.st.ca;upPipe();ntf('Ajouté au pipeline !','ok')}
+function upPipe(){[['ap','À postuler'],['po','Postulé'],['re','Relance'],['en','Entretien'],['rf','Refus']].forEach(([k,l])=>{const el=document.getElementById('c-'+k);const em=document.getElementById('e-'+k);const its=S.cands.filter(c=>c.st===k);el.innerHTML='';its.forEach(c=>{const d=document.createElement('div');d.className='pi';d.innerHTML='<div class="pi-t">'+(c.titre||'Poste')+'</div><div style="font-size:11px;color:var(--muted)">'+(c.ent||'')+'</div><div style="font-size:10px;color:var(--muted);margin-top:3px">'+c.date+'</div><select style="margin-top:5px;font-size:11px" onchange="mvPipe('+S.cands.indexOf(c)+',this.value)"><option value="ap"'+(c.st==='ap'?' selected':'')+'>À postuler</option><option value="po"'+(c.st==='po'?' selected':'')+'>Postulé</option><option value="re"'+(c.st==='re'?' selected':'')+'>Relance</option><option value="en"'+(c.st==='en'?' selected':'')+'>Entretien</option><option value="rf"'+(c.st==='rf'?' selected':'')+'>Refus</option></select>';el.appendChild(d)});em.style.display=its.length?'none':'block'})}
+function mvPipe(i,st){S.cands[i].st=st;upPipe()}
+function act(m){const el=document.getElementById('d-act');if(el.querySelector('.es'))el.innerHTML='';const d=document.createElement('div');d.style.cssText='font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px';d.innerHTML='<i class="ti ti-point-filled" style="color:#3b82f6;font-size:9px"></i>'+m+'<span style="margin-left:auto;color:var(--muted)">'+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+'</span>';el.insertBefore(d,el.firstChild)}
+async function runA(n){const off=document.getElementById('g-off').value.trim();const ent=document.getElementById('g-ent').value.trim();const p=gP();if(!off&&n===1){ntf('Entrez une offre','err');return}
+document.getElementById('b'+n).classList.add('op');document.getElementById('d'+n).className='dot run';const out=document.getElementById('o'+n);out.textContent='';out.className='aio ld';
+let pr='';
+if(n===1)pr='Analyse cette offre en français (5 missions, 5 compétences, logiciels, culture, vigilance) :\n'+off;
+else if(n===2){pr='Matching candidat/offre.\nProfil: '+p.nom+' | '+p.poste+' | '+p.diplome+' | '+p.bio+'\nLogiciels: '+(p.log||[]).join(', ')+'\nCompétences: '+(p.cmp||[]).join(', ')+'\nAnalyse offre:\n'+(S.ao[1]||'')+'\n\nDonne: score /100, points forts, manques, recommandation POSTULER/ADAPTER/ÉVITER'}
+else if(n===3){pr='Rédige en français:\n1. ACCROCHE CV (3 lignes)\n2. LETTRE DE MOTIVATION (4 paragraphes)\n\nProfil: '+p.nom+' | '+p.ville+' | '+p.email+'\nFormation: '+p.diplome+' — '+p.ecole+' ('+p.annee+')\nAxes DCG: '+(p.axes||[]).join(' / ')+'\nLogiciels: '+(p.log||[]).join(', ')+'\nBio: '+p.bio+'\nEntreprise: '+ent+'\nMatching: '+(S.ao[2]||'')+'\nNotes: '+document.getElementById('g-not').value}
+else if(n===4){pr='Contrôle qualité candidature.\nOffre: '+off+'\nContenu: '+(S.ao[3]||'')+'\n\nScore /100, ✅ points forts, ⚠️ à améliorer, ✉️ recommandation finale'}
+try{const res=await claude(pr);S.ao[n]=res;out.className='aio';out.textContent=res;document.getElementById('d'+n).className='dot done';if(n===1)document.getElementById('v1').disabled=false;if(n===2)document.getElementById('v2').disabled=false;if(n===3){const ga=document.getElementById('ga');ga.style.display='flex';ga.style.gap='7px';S.st.cv++;document.getElementById('s-cv').textContent=S.st.cv}if(n===4)document.getElementById('v4').disabled=false;act('Agent '+n+' terminé — '+ent)}catch(e){out.className='aio';out.textContent='Erreur: '+e.message;document.getElementById('d'+n).className='dot err';ntf('Erreur agent '+n,'err')}}
+function editA(n){const o=document.getElementById('o'+n);const old=o.textContent;o.innerHTML='<textarea style="width:100%;min-height:110px;font-size:13px">'+old+'</textarea><button class="btn btn-s btn-sm" style="margin-top:5px" onclick="saveA('+n+')"><i class=\'ti ti-check\'></i> OK</button>'}
+function saveA(n){const ta=document.querySelector('#o'+n+' textarea');if(!ta)return;const v=ta.value;S.ao[n]=v;const o=document.getElementById('o'+n);o.className='aio';o.textContent=v;document.getElementById('d'+n).className='dot done';if(n===1)document.getElementById('v1').disabled=false;if(n===2)document.getElementById('v2').disabled=false;if(n===4)document.getElementById('v4').disabled=false;ntf('Sauvegardé','ok')}
+function finalize(){const e=document.getElementById('g-ent').value||'Entreprise';const t=document.getElementById('g-off').value.split('\n')[0].substring(0,50)||'Poste';S.cands.push({titre:t,ent:e,st:'ap',date:new Date().toLocaleDateString('fr-FR')});S.st.ca++;document.getElementById('s-ca').textContent=S.st.ca;upPipe();document.getElementById('em-ent').value=e;act('Candidature finalisée: '+e);ntf('Ajouté au pipeline !','ok');P('email')}
+function dlPDF(t){const {jsPDF}=window.jspdf;const doc=new jsPDF();const p=gP();const c=S.ao[3]||'Aucun contenu.';const e=document.getElementById('g-ent').value||'Entreprise';doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(12,35,64);doc.text(t==='cv'?'CV — '+(p.nom||'Candidat'):'Lettre de motivation',20,20);doc.setFont('helvetica','normal');doc.setFontSize(11);doc.setTextColor(50,50,50);doc.text(doc.splitTextToSize(c,170),20,35);doc.save((t==='cv'?'CV_':'LM_')+(p.nom||'candidat').replace(' ','_')+'_'+e+'.pdf');ntf(t==='cv'?'CV téléchargé !':'Lettre téléchargée !','ok')}
+async function findContact(){const e=document.getElementById('em-ent').value.trim();const s=document.getElementById('em-sit').value.trim();if(!e){ntf('Entrez une entreprise','err');return}const el=document.getElementById('ct-res');el.innerHTML='<div class="card"><div class="aio ld">Recherche contact</div></div>';
+try{const res=await claude('Pour "'+e+'"'+(s?' (site: '+s+')':'')+', donne: formats email probables, adresses RH génériques, comment trouver sur LinkedIn. Sois précis.');el.innerHTML='<div class="card"><div class="card-t">Contacts — '+e+'</div><div class="aio">'+res+'</div></div>'}catch(err){el.innerHTML='<div class="card">Erreur: '+err.message+'</div>'}}
+async function genEmail(){const p=gP();const e=document.getElementById('em-ent').value||'l\'entreprise';
+try{const res=await claude('Email pro candidature (150-200 mots):\nCandidat: '+(p.nom||'')+'\nPoste: '+(p.poste||'alternance comptabilité')+'\nVille: '+(p.ville||'Paris')+'\nEntreprise: '+e+'\n\nInclus ligne "Objet:", accroche, profil 2 phrases, demande entretien, formule politesse.');const lines=res.split('\n');const ol=lines.find(l=>/^objet\s*:/i.test(l.trim()));if(ol)document.getElementById('em-sub').value=ol.replace(/^objet\s*:\s*/i,'').trim();document.getElementById('em-bod').value=res;S.st.em++;document.getElementById('s-em').textContent=S.st.em;act('Email rédigé pour '+e);ntf('Email généré !','ok')}catch(err){ntf('Erreur: '+err.message,'err')}}
+function openMail(){const to=document.getElementById('em-to').value;const sub=encodeURIComponent(document.getElementById('em-sub').value);const bod=encodeURIComponent(document.getElementById('em-bod').value);if(!to){ntf('Entrez un email','err');return}window.location.href='mailto:'+to+'?subject='+sub+'&body='+bod;ntf('Ouverture Mail...','ok')}
+function openPlatform(){const pl=document.getElementById('br-pl').value;const kw=document.getElementById('br-kw').value||'alternance comptabilité immobilier Paris';const km=document.getElementById('br-km').value;const urls={indeed:'https://fr.indeed.com/jobs?q='+encodeURIComponent(kw)+'&l=Paris&radius='+km,linkedin:'https://www.linkedin.com/jobs/search/?keywords='+encodeURIComponent(kw)+'&location=Paris&distance='+km,hellowork:'https://www.hellowork.com/fr-fr/emploi/recherche.html?k='+encodeURIComponent(kw)+'&l=Paris'};window.open(urls[pl],'_blank');ntf('Plateforme ouverte — copiez les offres dans "Coller texte"','ok')}
+function importCSV(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=function(ev){const ls=ev.target.result.split('\n');const hs=ls[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));let ct=0;ls.slice(1).forEach(l=>{if(!l.trim())return;const cs=l.split(',').map(c=>c.trim().replace(/"/g,''));const o={};hs.forEach((h,i)=>o[h]=cs[i]||'');S.offs.unshift({titre:o.titre||o.title||o.poste||'Poste',entreprise:o.entreprise||o.company||'',lieu:o.lieu||o.location||'',tx:Object.values(o).join(' '),type_contrat:'',secteur:'',competences_requises:[],logiciels:[],points_cles:''});ct++;S.st.off++});document.getElementById('s-off').textContent=S.st.off;affOff();P('offres');ntf(ct+' offres importées !','ok')};r.readAsText(f)}
+try{const sv=localStorage.getItem('jh_p');if(sv)S.prof=JSON.parse(sv)}catch(e){}
+upPipe();
+</script>
+</body>
+</html>
