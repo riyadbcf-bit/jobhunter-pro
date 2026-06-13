@@ -715,7 +715,7 @@ let _supabase = null;
 let currentUser = null;
 
 function initSupabase() {
-  if (SUPABASE_URL !== 'https://yugyxmzlocqfvkwasgub.supabase.co') {
+  if (typeof window.supabase !== 'undefined') {
     _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
   }
 }
@@ -725,13 +725,6 @@ function initSupabase() {
 // ============================================================
 let pendingEmail = '';
 let authMode = 'login';
-let currentUser = null;
-
-function initSupabase() {
-  if (SUPABASE_URL !== 'SUPABASE_URL_PLACEHOLDER') {
-    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  }
-}
 
 function toggleAuthMode() {
   authMode = authMode === 'login' ? 'signup' : 'login';
@@ -804,7 +797,7 @@ function launchApp() {
     }
   }
   document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app').classList.add('on');
+  document.getElementById('app').classList.add('visible');
   const em = currentUser.email;
   document.getElementById('u-em').textContent = em;
   document.getElementById('u-av').textContent = em.charAt(0).toUpperCase();
@@ -819,7 +812,7 @@ async function logout() {
   if (_supabase) await _supabase.auth.signOut();
   currentUser = null;
   document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('app').classList.remove('on');
+  document.getElementById('app').classList.remove('visible');
   document.getElementById('auth-email').value = '';
   document.getElementById('auth-pwd').value = '';
   ntf('Déconnecté — travaux sauvegardés ✓', 'nfo');
