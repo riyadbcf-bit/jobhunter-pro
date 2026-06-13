@@ -287,27 +287,26 @@ label:first-child{margin-top:0}
       <div class="tagline">Intelligence Candidature</div>
     </div>
 
-    <!-- Step 1: Email -->
-    <div class="auth-step active" id="step-email">
-      <div class="auth-title">Connexion</div>
-      <div class="auth-sub">Entrez votre email pour recevoir un code de vérification.</div>
+    <!-- Login / Signup -->
+    <div class="auth-step active" id="step-login">
+      <div class="auth-title" id="auth-mode-title">Connexion</div>
+      <div class="auth-sub" id="auth-mode-sub">Accédez à votre espace NEXUS.</div>
       <div class="field">
         <label>Adresse email</label>
-        <input type="email" id="auth-email" placeholder="vous@exemple.com" onkeydown="if(event.key==='Enter')sendCode()">
+        <input type="email" id="auth-email" placeholder="vous@exemple.com" onkeydown="if(event.key==='Enter')doAuth()">
       </div>
-      <button class="btn-auth" onclick="sendCode()" id="btn-send-code">Envoyer le code →</button>
+      <div class="field">
+        <label>Mot de passe</label>
+        <input type="password" id="auth-pwd" placeholder="Votre mot de passe" onkeydown="if(event.key==='Enter')doAuth()">
+      </div>
+      <div class="field" id="field-confirm" style="display:none">
+        <label>Confirmer le mot de passe</label>
+        <input type="password" id="auth-pwd2" placeholder="Confirmer">
+      </div>
+      <button class="btn-auth" onclick="doAuth()" id="btn-auth-main">Se connecter →</button>
+      <div class="auth-link">Pas de compte ? <span onclick="toggleAuthMode()" style="cursor:pointer">Créer un compte</span></div>
       <div class="auth-error" id="auth-err-email"></div>
-    </div>
-
-    <!-- Step 2: OTP -->
-    <div class="auth-step" id="step-otp">
-      <div class="auth-title">Vérification</div>
-      <div class="auth-sub" id="otp-sub">Un code à 6 chiffres a été envoyé à <strong></strong>.</div>
-      <div class="otp-grid" id="otp-inputs"></div>
-      <button class="btn-auth" onclick="verifyCode()" id="btn-verify">Vérifier le code →</button>
-      <div class="auth-link"><span onclick="backToEmail()">← Changer d'email</span> · <span onclick="sendCode()">Renvoyer le code</span></div>
-      <div class="auth-error" id="auth-err-otp"></div>
-      <div class="auth-success" id="auth-ok-otp"></div>
+      <div class="auth-success" id="auth-ok-email"></div>
     </div>
   </div>
 </div>
