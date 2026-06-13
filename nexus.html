@@ -484,7 +484,7 @@ label:first-child{margin-top:0}
         </div>
 
         <div style="display:flex;gap:10px;margin-top:16px">
-          <button class="btn btn-glow" onclick="saveP()"><i class="ti ti-device-floppy"></i>Sauvegarder</button>
+          <button class="btn btn-glow" onclick="saveProfile()"><i class="ti ti-device-floppy"></i>Sauvegarder</button>
           <button class="btn" onclick="loadDef()"><i class="ti ti-refresh"></i>Charger profil par défaut</button>
         </div>
       </div>
@@ -722,114 +722,141 @@ function initSupabase() {
 }
 
 // ============================================================
-// AUTH — OTP par email via Supabase
+// AUTH — Email + Password via Supabase
 // ============================================================
 let pendingEmail = '';
-let otpCode = '';
+let authMode = 'login';
+let currentUser = null;
 
-async function sendCode() {
+function initSupabase() {
+  if (SUPABASE_URL !== 'SUPABASE_URL_PLACEHOLDER') {
+    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+}
+
+function toggleAuthMode() {
+  authMode = authMode === 'login' ? 'signup' : 'login';
+  const isSignup = authMode === 'signup';
+  document.getElementById('auth-mode-title').textContent = isSignup ? 'Créer un compte' : 'Connexion';
+  document.getElementById('auth-mode-sub').textContent = isSignup ? 'Rejoignez NEXUS en quelques secondes.' : 'Accédez à votre espace NEXUS.';
+  document.getElementById('btn-auth-main').textContent = isSignup ? 'Créer mon compte →' : 'Se connecter →';
+  document.getElementById('field-confirm').style.display = isSignup ? 'block' : 'none';
+  document.querySelector('.auth-link').innerHTML = isSignup
+    ? 'Déjà un compte ? <span onclick="toggleAuthMode()">Se connecter</span>'
+    : 'Pas de compte ? <span onclick="toggleAuthMode()">Créer un compte</span>';
+}
+
+async function doAuth() {
   const email = document.getElementById('auth-email').value.trim();
-  if (!email || !email.includes('@')) { showAuthErr('email', 'Email invalide'); return; }
-  pendingEmail = email;
-  const btn = document.getElementById('btn-send-code');
-  btn.disabled = true; btn.textContent = 'Envoi en cours...';
+  const pwd = document.getElementById('auth-pwd').value;
+  if (!email || !email.includes('@')) { showAuthErr('Adresse email invalide'); return; }
+  if (!pwd || pwd.length < 6) { showAuthErr('Mot de passe trop court (6 caractères min)'); return; }
+  const btn = document.getElementById('btn-auth-main');
+  btn.disabled = true; btn.textContent = 'Chargement...';
 
   if (_supabase) {
-    const { error } = await _supabase.auth.signInWithOtp({ email });
-    if (error) { showAuthErr('email', error.message); btn.disabled=false; btn.textContent='Envoyer le code →'; return; }
-  } else {
-    // Mode local sans Supabase — code fixe pour demo
-    otpCode = '123456';
-    ntf('Mode local : code 123456', 'info');
-  }
-
-  // Passer à l'étape OTP
-  document.getElementById('step-email').classList.remove('active');
-  document.getElementById('step-otp').classList.add('active');
-  document.querySelector('#otp-sub strong').textContent = email;
-  buildOTPInputs();
-  btn.disabled=false; btn.textContent='Envoyer le code →';
-}
-
-function buildOTPInputs() {
-  const grid = document.getElementById('otp-inputs');
-  grid.innerHTML = '';
-  for (let i = 0; i < 6; i++) {
-    const inp = document.createElement('input');
-    inp.type = 'text'; inp.maxLength = 1; inp.className = '';
-    inp.style.cssText = 'text-align:center;font-size:22px;font-weight:700;padding:12px 4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;outline:none;font-family:Space Grotesk,sans-serif;transition:all .2s';
-    inp.addEventListener('input', e => {
-      e.target.style.borderColor='var(--cyan)';
-      if (e.target.value && i < 5) grid.children[i+1].focus();
-    });
-    inp.addEventListener('keydown', e => {
-      if (e.key==='Backspace' && !e.target.value && i > 0) grid.children[i-1].focus();
-    });
-    inp.addEventListener('focus', e => e.target.style.borderColor='var(--cyan)');
-    grid.appendChild(inp);
-  }
-  grid.children[0].focus();
-}
-
-function getOTPValue() {
-  return Array.from(document.getElementById('otp-inputs').children).map(i=>i.value).join('');
-}
-
-async function verifyCode() {
-  const code = getOTPValue();
-  if (code.length < 6) { showAuthErr('otp', 'Entrez les 6 chiffres'); return; }
-  const btn = document.getElementById('btn-verify');
-  btn.disabled=true; btn.textContent='Vérification...';
-
-  if (_supabase) {
-    const { data, error } = await _supabase.auth.verifyOtp({ email: pendingEmail, token: code, type: 'email' });
-    if (error) { showAuthErr('otp', 'Code incorrect ou expiré'); btn.disabled=false; btn.textContent='Vérifier le code →'; return; }
-    currentUser = data.user;
-  } else {
-    if (code !== '123456' && code !== otpCode) {
-      showAuthErr('otp', 'Code incorrect (essayez 123456)');
-      btn.disabled=false; btn.textContent='Vérifier le code →'; return;
+    if (authMode === 'signup') {
+      const pwd2 = document.getElementById('auth-pwd2').value;
+      if (pwd !== pwd2) { showAuthErr('Les mots de passe ne correspondent pas'); btn.disabled=false; btn.textContent='Créer mon compte →'; return; }
+      const { data, error } = await _supabase.auth.signUp({ email, password: pwd });
+      if (error) { showAuthErr(error.message); btn.disabled=false; btn.textContent='Créer mon compte →'; return; }
+      currentUser = data.user;
+      showAuthOk('Compte créé avec succès !');
+      setTimeout(launchApp, 800);
+    } else {
+      const { data, error } = await _supabase.auth.signInWithPassword({ email, password: pwd });
+      if (error) { showAuthErr('Email ou mot de passe incorrect'); btn.disabled=false; btn.textContent='Se connecter →'; return; }
+      currentUser = data.user;
+      launchApp();
     }
-    currentUser = { email: pendingEmail, id: 'local-' + pendingEmail };
+  } else {
+    // Mode local sans Supabase
+    currentUser = { email, id: 'local-' + email };
+    launchApp();
   }
-
-  document.getElementById('auth-ok-otp').style.display='block';
-  document.getElementById('auth-ok-otp').textContent = '✓ Connecté avec succès !';
-  setTimeout(() => launchApp(), 800);
+  btn.disabled = false;
 }
 
-function backToEmail() {
-  document.getElementById('step-otp').classList.remove('active');
-  document.getElementById('step-email').classList.add('active');
+async function checkExistingSession() {
+  if (!_supabase) return;
+  const { data } = await _supabase.auth.getSession();
+  if (data.session) {
+    currentUser = data.session.user;
+    launchApp();
+  }
 }
 
-function showAuthErr(step, msg) {
-  const el = document.getElementById('auth-err-' + step);
-  el.textContent = msg; el.style.display='block';
-  setTimeout(() => el.style.display='none', 4000);
+function showAuthErr(msg) {
+  const el = document.getElementById('auth-err-email');
+  el.textContent = msg; el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+
+function showAuthOk(msg) {
+  const el = document.getElementById('auth-ok-email');
+  el.textContent = msg; el.style.display = 'block';
 }
 
 function launchApp() {
-  document.getElementById('auth-screen').style.display='none';
-  document.getElementById('app').classList.add('visible');
-  // Set user info
+  if (!localStorage.getItem('nx_ant_key')) {
+    const k = prompt('Activez les agents IA — Entrez votre clé API Anthropic (sk-ant-...):');
+    if (k && k.startsWith('sk-ant-')) {
+      localStorage.setItem('nx_ant_key', k);
+    }
+  }
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').classList.add('on');
   const em = currentUser.email;
-  document.getElementById('user-email-display').textContent = em;
-  document.getElementById('user-av').textContent = em.charAt(0).toUpperCase();
-  // Load profile
-  loadSavedProfil();
-  ntf('Bienvenue sur NEXUS !', 'ok');
+  document.getElementById('u-em').textContent = em;
+  document.getElementById('u-av').textContent = em.charAt(0).toUpperCase();
+  loadSavedProfile();
+  loadFromCloud();
+  ntf('Bienvenue ' + em.split('@')[0] + ' !', 'nok');
 }
 
 async function logout() {
+  saveProfile();
+  await saveToCloud();
   if (_supabase) await _supabase.auth.signOut();
   currentUser = null;
-  document.getElementById('auth-screen').style.display='flex';
-  document.getElementById('app').classList.remove('visible');
-  document.getElementById('step-otp').classList.remove('active');
-  document.getElementById('step-email').classList.add('active');
-  document.getElementById('auth-email').value='';
-  ntf('Déconnecté', 'info');
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app').classList.remove('on');
+  document.getElementById('auth-email').value = '';
+  document.getElementById('auth-pwd').value = '';
+  ntf('Déconnecté — travaux sauvegardés ✓', 'nfo');
+}
+
+async function saveToCloud() {
+  if (!_supabase || !currentUser || !S.prof) return;
+  try {
+    await _supabase.from('profiles').upsert({
+      user_id: currentUser.id,
+      email: currentUser.email,
+      profil: JSON.stringify(S.prof),
+      candidatures: JSON.stringify(S.cands),
+      stats: JSON.stringify(S.st),
+      updated_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+  } catch(e) {}
+}
+
+async function loadFromCloud() {
+  if (!_supabase || !currentUser) return;
+  try {
+    const { data } = await _supabase.from('profiles').select('profil,candidatures,stats').eq('user_id', currentUser.id).single();
+    if (data) {
+      if (data.profil) { const p = JSON.parse(data.profil); localStorage.setItem('nx_p', JSON.stringify(p)); loadSavedProfile(); ntf('Profil synchronisé depuis le cloud ✓', 'nok'); }
+      if (data.candidatures) { S.cands = JSON.parse(data.candidatures); upPipe(); }
+      if (data.stats) { S.st = JSON.parse(data.stats); updateStats(); }
+    }
+  } catch(e) {}
+}
+
+function updateStats() {
+  document.getElementById('s-off').textContent = S.st.off || 0;
+  document.getElementById('s-cv').textContent = S.st.cv || 0;
+  document.getElementById('s-em').textContent = S.st.em || 0;
+  document.getElementById('s-ca').textContent = S.cands.filter(c=>c.st!=='rf').length;
 }
 
 // ============================================================
@@ -929,7 +956,7 @@ function addExp() {
 
 function gP() { return S.prof || JSON.parse(localStorage.getItem('nx_p')||'{}') || {}; }
 
-function saveP() {
+function saveProfile() {
   S.prof = {
     nom:document.getElementById('p-nom').value,
     email:document.getElementById('p-email').value,
@@ -985,7 +1012,7 @@ function loadDef() {
   ntf('Profil par défaut chargé', 'ok');
 }
 
-function loadSavedProfil() {
+function loadSavedProfile() {
   try {
     const saved = localStorage.getItem('nx_p');
     if (saved) {
