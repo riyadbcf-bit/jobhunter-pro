@@ -709,7 +709,7 @@ label:first-child{margin-top:0}
 // ============================================================
 const SUPABASE_URL = 'https://yugyxmzlocqfvkwasgub.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1Z3l4bXpsb2NxZnZrd2FzZ3ViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNzYwMzAsImV4cCI6MjA5Njg1MjAzMH0.chcY1YU4aXx3KwW__2tn-TWJwFTKJdw7cgr';
-const ANTHROPIC_KEY = localStorage.getItem('nx_ant_key') || '';
+// ANTHROPIC_KEY is read dynamically in claude()
 
 let _supabase = null;
 let currentUser = null;
@@ -1034,7 +1034,7 @@ async function claude(prompt, maxTokens=1500) {
     method:'POST',
     headers:{
       'Content-Type':'application/json',
-      'x-api-key': ANTHROPIC_KEY,
+      'x-api-key': localStorage.getItem('nx_ant_key') || '',
       'anthropic-version':'2023-06-01',
       'anthropic-dangerous-direct-browser-access':'true'
     },
