@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS — Intelligence Candidature</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root {
+  --bg: #070B14;
+  --bg2: #0D1829;
+  --bg3: #111D35;
+  --border: rgba(0, 212, 255, 0.12);
+  --border2: rgba(255,255,255,0.06);
+  --cyan: #00D4FF;
+  --violet: #7C3AED;
+  --green: #10B981;
+  --amber: #F59E0B;
+  --red: #EF4444;
+  --text: #F0F4FF;
+  --muted: #6B7FA3;
+  --muted2: #4A5568;
+  --card: rgba(13,24,41,0.95);
+  --glow: 0 0 30px rgba(0,212,255,0.15);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+::selection{background:rgba(0,212,255,0.3);color:#fff}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:rgba(0,212,255,0.3);border-radius:2px}
+
+/* AUTH */
+#auth-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:1000;background-image:radial-gradient(ellipse at 20% 50%, rgba(124,58,237,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(0,212,255,0.08) 0%, transparent 60%)}
+.auth-card{width:420px;padding:48px 40px;background:var(--bg2);border:1px solid var(--border);border-radius:20px;position:relative;overflow:hidden}
+.auth-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),var(--violet),transparent)}
+.auth-logo{text-align:center;margin-bottom:36px}
+.auth-logo .brand{font-family:'Space Grotesk',sans-serif;font-size:32px;font-weight:700;letter-spacing:6px;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.auth-logo .tagline{font-size:12px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-top:6px}
+.auth-step{display:none}.auth-step.active{display:block}
+.auth-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.auth-sub{font-size:13px;color:var(--muted);margin-bottom:28px;line-height:1.6}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px}
+.field input{width:100%;padding:12px 14px;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:10px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:all .2s}
+.field input:focus{border-color:var(--cyan);background:rgba(0,212,255,0.04);box-shadow:0 0 0 3px rgba(0,212,255,0.08)}
+.field input::placeholder{color:var(--muted2)}
+.btn-auth{width:100%;padding:13px;background:linear-gradient(135deg,var(--cyan),var(--violet));border:none;border-radius:10px;color:#fff;font-size:14px;font-weight:600;font-family:'Space Grotesk',sans-serif;cursor:pointer;letter-spacing:.5px;transition:all .2s;margin-top:8px}
+.btn-auth:hover{transform:translateY(-1px);box-shadow:0 8px 25px rgba(0,212,255,0.25)}
+.btn-auth:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.auth-link{text-align:center;margin-top:20px;font-size:13px;color:var(--muted)}
+.auth-link span{color:var(--cyan);cursor:pointer}
+.auth-link span:hover{text-decoration:underline}
+.otp-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:20px 0}
+.otp-grid input{text-align:center;font-size:20px;font-weight:700;padding:14px 6px;letter-spacing:0;font-family:'Space Grotesk',sans-serif}
+.auth-error{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:#FCA5A5;margin-top:12px;display:none}
+.auth-success{background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px 14px;font-size:13px;color:#6EE7B7;margin-top:12px;display:none}
+
+/* APP */
+#app{display:none;height:100vh;display:grid;grid-template-columns:260px 1fr;grid-template-rows:100vh}
+#app.visible{display:grid}
+
+/* SIDEBAR */
+.sidebar{background:var(--bg2);border-right:1px solid var(--border2);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.sidebar::after{content:'';position:absolute;top:0;right:0;width:1px;height:100%;background:linear-gradient(180deg,transparent,var(--cyan),transparent);opacity:.3}
+.sidebar-top{padding:24px 20px 16px;border-bottom:1px solid var(--border2)}
+.brand-mark{display:flex;align-items:center;gap:10px}
+.brand-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--cyan),var(--violet));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.brand-name{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;background:linear-gradient(135deg,var(--cyan),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.brand-sub{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px}
+
+.user-pill{margin:12px 20px;padding:10px 12px;background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.1);border-radius:10px;display:flex;align-items:center;gap:10px}
+.user-avatar{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,var(--cyan),var(--violet));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.user-info{flex:1;min-width:0}
+.user-email{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-status{font-size:10px;color:var(--green);display:flex;align-items:center;gap:4px}
+.user-status::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green);display:inline-block}
+
+.nav-section-label{padding:14px 20px 6px;font-size:9px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px}
+.nav-item{display:flex;align-items:center;gap:11px;padding:9px 20px;cursor:pointer;font-size:13px;color:var(--muted);border-radius:0;transition:all .15s;position:relative;margin:1px 0}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.03)}
+.nav-item.active{color:var(--cyan);background:rgba(0,212,255,0.06)}
+.nav-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--cyan);border-radius:0 2px 2px 0}
+.nav-item i{font-size:16px;flex-shrink:0}
+.nav-badge{margin-left:auto;font-size:10px;padding:2px 7px;border-radius:20px;background:rgba(0,212,255,0.15);color:var(--cyan);font-weight:600}
+
+.sidebar-bottom{margin-top:auto;padding:14px 20px;border-top:1px solid var(--border2)}
+.logout-btn{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--muted);cursor:pointer;padding:7px 0;transition:color .15s}
+.logout-btn:hover{color:var(--red)}
+
+/* AGENTS SHOWCASE */
+.agents-bar{padding:10px 20px;border-bottom:1px solid var(--border2);background:rgba(0,212,255,0.02)}
+.agents-label{font-size:9px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px}
+.agent-mini{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;transition:all .15s;margin-bottom:2px}
+.agent-mini:hover{background:rgba(255,255,255,0.03)}
+.agent-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.agent-mini-name{font-size:12px;font-weight:600;color:var(--text)}
+.agent-mini-role{font-size:10px;color:var(--muted);flex:1}
+.agent-mini-status{font-size:9px;padding:2px 6px;border-radius:10px}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.topbar{height:56px;background:rgba(7,11,20,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--border2);padding:0 28px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:sticky;top:0;z-index:10}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.topbar-title{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:600;color:var(--text)}
+.topbar-sub{font-size:12px;color:var(--muted)}
+.topbar-right{display:flex;align-items:center;gap:10px}
+.content{flex:1;overflow-y:auto;padding:28px}
+.page{display:none}.page.active{display:block}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:rgba(255,255,255,0.04);color:var(--text);transition:all .15s;font-family:'Inter',sans-serif}
+.btn:hover{background:rgba(255,255,255,0.08);border-color:rgba(255,255,255,0.12)}
+.btn-primary{background:linear-gradient(135deg,rgba(0,212,255,0.15),rgba(124,58,237,0.15));border-color:var(--cyan);color:var(--cyan)}
+.btn-primary:hover{background:linear-gradient(135deg,rgba(0,212,255,0.25),rgba(124,58,237,0.25));box-shadow:0 4px 15px rgba(0,212,255,0.15)}
+.btn-glow{background:linear-gradient(135deg,var(--cyan),var(--violet));border:none;color:#fff;font-weight:600}
+.btn-glow:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,212,255,0.3)}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-danger{border-color:rgba(239,68,68,0.3);color:var(--red);background:rgba(239,68,68,0.05)}
+.btn-danger:hover{background:rgba(239,68,68,0.1)}
+.btn-success{border-color:rgba(16,185,129,0.3);color:var(--green);background:rgba(16,185,129,0.05)}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:20px}
+.card-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title i{color:var(--cyan);font-size:16px}
+
+/* STATS */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;transition:border-color .2s}
+.stat-card:hover{border-color:rgba(0,212,255,0.2)}
+.stat-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--glow-color,var(--cyan));opacity:.4}
+.stat-label{font-size:11px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.stat-value{font-family:'Space Grotesk',sans-serif;font-size:28px;font-weight:700;color:var(--text)}
+.stat-trend{font-size:11px;color:var(--green);margin-top:4px}
+
+/* AGENT CARDS */
+.agent-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px}
+.agent-card{background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:18px;position:relative;overflow:hidden;transition:all .25s;cursor:pointer}
+.agent-card:hover{transform:translateY(-3px);border-color:rgba(0,212,255,0.25);box-shadow:0 10px 30px rgba(0,0,0,0.3)}
+.agent-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent,rgba(0,212,255,0.03));opacity:0;transition:.25s}
+.agent-card:hover::before{opacity:1}
+.agent-avatar{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:12px;position:relative}
+.agent-avatar::after{content:'';position:absolute;inset:-1px;border-radius:13px;background:linear-gradient(135deg,var(--a-color,var(--cyan)),transparent);z-index:-1;opacity:.4}
+.agent-name{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px}
+.agent-role{font-size:11px;color:var(--muted);line-height:1.4;margin-bottom:10px}
+.agent-indicator{display:flex;align-items:center;gap:5px;font-size:10px}
+.agent-dot-live{width:5px;height:5px;border-radius:50%;animation:pulse-dot 2s infinite}
+@keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+
+/* FORMS */
+textarea,input[type=text],input[type=email],select{width:100%;padding:10px 13px;background:rgba(255,255,255,0.04);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:all .15s}
+textarea:focus,input:focus,select:focus{border-color:var(--cyan);background:rgba(0,212,255,0.03);box-shadow:0 0 0 3px rgba(0,212,255,0.06)}
+textarea::placeholder,input::placeholder{color:var(--muted2)}
+textarea{resize:vertical;min-height:80px;line-height:1.5}
+select option{background:var(--bg2);color:var(--text)}
+label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;display:block;margin-bottom:6px;margin-top:14px}
+label:first-child{margin-top:0}
+
+/* TAGS */
+.tag-wrap{background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:8px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;min-height:40px;cursor:text;transition:border-color .15s}
+.tag-wrap:focus-within{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,212,255,0.06)}
+.tag-wrap input{border:none;background:transparent;color:var(--text);font-size:12px;padding:3px 5px;flex:1;min-width:100px;outline:none}
+.tag-wrap input::placeholder{color:var(--muted2)}
+.tag{display:inline-flex;align-items:center;gap:4px;background:rgba(0,212,255,0.1);border:1px solid rgba(0,212,255,0.2);color:var(--cyan);border-radius:6px;padding:3px 8px;font-size:11px;font-weight:500}
+.tag i{cursor:pointer;font-size:11px;opacity:.7;transition:opacity .15s}
+.tag i:hover{opacity:1}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-cyan{background:rgba(0,212,255,0.12);color:var(--cyan);border:1px solid rgba(0,212,255,0.2)}
+.badge-violet{background:rgba(124,58,237,0.15);color:#A78BFA;border:1px solid rgba(124,58,237,0.25)}
+.badge-green{background:rgba(16,185,129,0.12);color:var(--green);border:1px solid rgba(16,185,129,0.2)}
+.badge-amber{background:rgba(245,158,11,0.12);color:var(--amber);border:1px solid rgba(245,158,11,0.2)}
+.badge-red{background:rgba(239,68,68,0.12);color:var(--red);border:1px solid rgba(239,68,68,0.2)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.2);color:#A78BFA;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:500;cursor:pointer;transition:all .15s}
+.chip:hover{background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.2);color:var(--red)}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border2);margin-bottom:20px}
+.tab{padding:10px 18px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan)}
+
+/* OFFER CARDS */
+.offer-card{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;padding:16px;margin-bottom:10px;transition:all .2s;cursor:pointer}
+.offer-card:hover{border-color:rgba(0,212,255,0.25);background:var(--bg3);transform:translateX(3px)}
+.offer-title{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px}
+.offer-company{font-size:13px;color:var(--muted);margin-bottom:10px}
+.score-ring{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;position:relative}
+.score-ring::before{content:'';position:absolute;inset:2px;border-radius:50%;background:var(--bg2)}
+.score-ring span{position:relative;z-index:1}
+.score-high{background:conic-gradient(var(--green) var(--pct,0%), rgba(255,255,255,0.05) 0%);color:var(--green)}
+.score-med{background:conic-gradient(var(--amber) var(--pct,0%), rgba(255,255,255,0.05) 0%);color:var(--amber)}
+.score-low{background:conic-gradient(var(--red) var(--pct,0%), rgba(255,255,255,0.05) 0%);color:var(--red)}
+
+/* AGENT STEPS */
+.agent-step{border:1px solid var(--border2);border-radius:12px;overflow:hidden;margin-bottom:10px;transition:border-color .2s}
+.agent-step.running{border-color:rgba(0,212,255,0.3);box-shadow:0 0 20px rgba(0,212,255,0.05)}
+.agent-step.done{border-color:rgba(16,185,129,0.3)}
+.agent-step-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(255,255,255,0.02);cursor:pointer;user-select:none}
+.agent-step-left{display:flex;align-items:center;gap:12px;font-size:13px;font-weight:600;color:var(--text)}
+.agent-step-avatar{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.agent-body{padding:16px;border-top:1px solid var(--border2);display:none}
+.agent-body.open{display:block}
+.agent-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.dot-idle{background:var(--muted2)}
+.dot-run{background:var(--amber);animation:pulse-dot 1s infinite}
+.dot-done{background:var(--green)}
+.dot-err{background:var(--red)}
+.ai-output{background:rgba(0,0,0,0.3);border:1px solid var(--border2);border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;min-height:60px;max-height:340px;overflow-y:auto;color:var(--text);font-family:'Inter',sans-serif}
+.ld::after{content:'...';animation:dots 1.2s infinite}
+@keyframes dots{0%{content:'.'}33%{content:'..'}66%{content:'...'}}
+
+/* PIPELINE */
+.pipeline-wrap{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px}
+.pipe-col{background:rgba(255,255,255,0.02);border:1px solid var(--border2);border-radius:12px;padding:14px;min-width:180px;flex-shrink:0}
+.pipe-col-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.pipe-count{background:rgba(0,212,255,0.1);color:var(--cyan);border-radius:10px;padding:1px 7px;font-size:10px}
+.pipe-item{background:var(--bg2);border:1px solid var(--border2);border-radius:8px;padding:10px;margin-bottom:7px;transition:all .15s}
+.pipe-item:hover{border-color:rgba(0,212,255,0.2)}
+.pipe-item-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:2px}
+.pipe-item-co{font-size:11px;color:var(--muted)}
+.pipe-item-date{font-size:10px;color:var(--muted2);margin-top:5px}
+
+/* GRID */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+
+/* ACTIVITY */
+.activity-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--muted)}
+.activity-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.activity-time{margin-left:auto;font-size:10px;color:var(--muted2)}
+
+/* NOTIFICATIONS */
+.notif{position:fixed;bottom:24px;right:24px;padding:12px 18px;border-radius:10px;font-size:13px;z-index:9999;opacity:0;transform:translateY(10px);transition:all .3s;pointer-events:none;font-weight:500;max-width:320px;border:1px solid}
+.notif.show{opacity:1;transform:translateY(0)}
+.notif-ok{background:rgba(16,185,129,0.15);border-color:rgba(16,185,129,0.3);color:var(--green)}
+.notif-err{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.3);color:var(--red)}
+.notif-info{background:rgba(0,212,255,0.1);border-color:rgba(0,212,255,0.2);color:var(--cyan)}
+
+/* EMPTY */
+.empty{text-align:center;padding:40px;color:var(--muted)}
+.empty i{font-size:40px;margin-bottom:12px;display:block;opacity:.4}
+.empty-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px}
+.empty-sub{font-size:13px}
+
+/* SECTIONS */
+.section-title{font-family:'Space Grotesk',sans-serif;font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px}
+.section-sub{font-size:13px;color:var(--muted);margin-bottom:24px}
+.divider{height:1px;background:var(--border2);margin:20px 0}
+
+/* IMPORT AREA */
+.drop-zone{border:2px dashed rgba(0,212,255,0.2);border-radius:12px;padding:30px;text-align:center;color:var(--muted);cursor:pointer;transition:all .2s}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--cyan);background:rgba(0,212,255,0.03)}
+.drop-zone i{font-size:32px;margin-bottom:10px;display:block;color:var(--cyan);opacity:.6}
+
+/* PLATFORM BUTTONS */
+.platform-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.platform-btn{padding:12px;background:rgba(255,255,255,0.03);border:1px solid var(--border2);border-radius:10px;text-align:center;cursor:pointer;transition:all .2s;font-size:12px;color:var(--muted);font-weight:500}
+.platform-btn:hover,.platform-btn.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,212,255,0.05)}
+.platform-btn i{font-size:20px;display:block;margin-bottom:5px}
+
+/* SCROLLABLE LIST */
+.offer-list{max-height:65vh;overflow-y:auto;padding-right:4px}
+.info-box{background:rgba(0,212,255,0.05);border:1px solid rgba(0,212,255,0.15);border-radius:8px;padding:12px 14px;font-size:12px;color:rgba(0,212,255,0.8);line-height:1.6}
+
+/* GLOW EFFECTS */
+@keyframes glow{0%,100%{box-shadow:0 0 15px rgba(0,212,255,0.1)}50%{box-shadow:0 0 30px rgba(0,212,255,0.25)}}
+.glow-pulse{animation:glow 3s ease-in-out infinite}
+
+/* FORM ROW */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+</style>
+</head>
+<body>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card glow-pulse">
+    <div class="auth-logo">
+      <div class="brand">NEXUS</div>
+      <div class="tagline">Intelligence Candidature</div>
+    </div>
+
+    <!-- Step 1: Email -->
+    <div class="auth-step active" id="step-email">
+      <div class="auth-title">Connexion</div>
+      <div class="auth-sub">Entrez votre email pour recevoir un code de vérification.</div>
+      <div class="field">
+        <label>Adresse email</label>
+        <input type="email" id="auth-email" placeholder="vous@exemple.com" onkeydown="if(event.key==='Enter')sendCode()">
+      </div>
+      <button class="btn-auth" onclick="sendCode()" id="btn-send-code">Envoyer le code →</button>
+      <div class="auth-error" id="auth-err-email"></div>
+    </div>
+
+    <!-- Step 2: OTP -->
+    <div class="auth-step" id="step-otp">
+      <div class="auth-title">Vérification</div>
+      <div class="auth-sub" id="otp-sub">Un code à 6 chiffres a été envoyé à <strong></strong>.</div>
+      <div class="otp-grid" id="otp-inputs"></div>
+      <button class="btn-auth" onclick="verifyCode()" id="btn-verify">Vérifier le code →</button>
+      <div class="auth-link"><span onclick="backToEmail()">← Changer d'email</span> · <span onclick="sendCode()">Renvoyer le code</span></div>
+      <div class="auth-error" id="auth-err-otp"></div>
+      <div class="auth-success" id="auth-ok-otp"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-top">
+      <div class="brand-mark">
+        <div class="brand-icon">⚡</div>
+        <div>
+          <div class="brand-name">NEXUS</div>
+          <div class="brand-sub">Intelligence IA</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-pill">
+      <div class="user-avatar" id="user-av">?</div>
+      <div class="user-info">
+        <div class="user-email" id="user-email-display">—</div>
+        <div class="user-status">Connecté</div>
+      </div>
+    </div>
+
+    <div class="nav-section-label">Navigation</div>
+    <div class="nav-item active" onclick="showPage('dash')" id="nav-dash"><i class="ti ti-layout-dashboard"></i>Tableau de bord</div>
+    <div class="nav-item" onclick="showPage('profil')" id="nav-profil"><i class="ti ti-user-circle"></i>Mon profil</div>
+
+    <div class="nav-section-label">Agents</div>
+    <div class="nav-item" onclick="showPage('search')" id="nav-search"><i class="ti ti-world-search"></i><span>ARIA</span><span style="font-size:10px;color:var(--muted);margin-left:2px">— Recherche</span></div>
+    <div class="nav-item" onclick="showPage('gen')" id="nav-gen"><i class="ti ti-file-text"></i><span>LÉNA</span><span style="font-size:10px;color:var(--muted);margin-left:2px">— Rédaction</span></div>
+    <div class="nav-item" onclick="showPage('email')" id="nav-email"><i class="ti ti-mail"></i><span>SOFIA</span><span style="font-size:10px;color:var(--muted);margin-left:2px">— Email</span></div>
+
+    <div class="nav-section-label">Suivi</div>
+    <div class="nav-item" onclick="showPage('pipeline')" id="nav-pipeline"><i class="ti ti-columns"></i>Pipeline <span class="nav-badge" id="badge-pipe">0</span></div>
+
+    <div class="sidebar-bottom">
+      <div class="logout-btn" onclick="logout()"><i class="ti ti-logout"></i>Déconnexion</div>
+    </div>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="page-title">Tableau de bord</div>
+        <div class="topbar-sub" id="page-sub">Vue d'ensemble</div>
+      </div>
+      <div class="topbar-right">
+        <button class="btn btn-sm" onclick="showPage('profil')"><i class="ti ti-settings"></i>Profil</button>
+        <button class="btn btn-primary btn-sm" onclick="showPage('search')"><i class="ti ti-plus"></i>Nouvelle recherche</button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dash">
+        <div class="stat-grid">
+          <div class="stat-card" style="--glow-color:var(--cyan)">
+            <div class="stat-label">Offres analysées</div>
+            <div class="stat-value" id="s-off">0</div>
+            <div class="stat-trend">↑ Ce mois</div>
+          </div>
+          <div class="stat-card" style="--glow-color:var(--violet)">
+            <div class="stat-label">CV générés</div>
+            <div class="stat-value" id="s-cv">0</div>
+          </div>
+          <div class="stat-card" style="--glow-color:var(--green)">
+            <div class="stat-label">Emails envoyés</div>
+            <div class="stat-value" id="s-em">0</div>
+          </div>
+          <div class="stat-card" style="--glow-color:var(--amber)">
+            <div class="stat-label">Candidatures actives</div>
+            <div class="stat-value" id="s-ca">0</div>
+          </div>
+        </div>
+
+        <!-- AGENT CARDS -->
+        <div class="section-title">Vos agents IA</div>
+        <div class="section-sub">5 spécialistes dédiés à votre recherche d'emploi</div>
+        <div class="agent-grid">
+          <div class="agent-card" onclick="showPage('search')" style="--a-color:#00D4FF">
+            <div class="agent-avatar" style="background:rgba(0,212,255,0.1);font-size:22px">🔍</div>
+            <div class="agent-name">ARIA</div>
+            <div class="agent-role">Analyse & Recherche sur LinkedIn, Indeed, HelloWork, Manpower, Adecco, France Travail</div>
+            <div class="agent-indicator"><div class="agent-dot-live" style="background:var(--green)"></div><span style="font-size:10px;color:var(--green)">Actif</span></div>
+          </div>
+          <div class="agent-card" onclick="showPage('gen')" style="--a-color:#F59E0B">
+            <div class="agent-avatar" style="background:rgba(245,158,11,0.1);font-size:22px">📊</div>
+            <div class="agent-name">MARCUS</div>
+            <div class="agent-role">Matching & Scoring — Évalue la compatibilité offre/profil</div>
+            <div class="agent-indicator"><div class="agent-dot-live" style="background:var(--amber)"></div><span style="font-size:10px;color:var(--amber)">En attente</span></div>
+          </div>
+          <div class="agent-card" onclick="showPage('gen')" style="--a-color:#7C3AED">
+            <div class="agent-avatar" style="background:rgba(124,58,237,0.1);font-size:22px">✍️</div>
+            <div class="agent-name">LÉNA</div>
+            <div class="agent-role">Rédaction — CV et lettres de motivation personnalisés</div>
+            <div class="agent-indicator"><div class="agent-dot-live" style="background:var(--violet)"></div><span style="font-size:10px;color:#A78BFA">En attente</span></div>
+          </div>
+          <div class="agent-card" onclick="showPage('gen')" style="--a-color:#10B981">
+            <div class="agent-avatar" style="background:rgba(16,185,129,0.1);font-size:22px">🛡️</div>
+            <div class="agent-name">VICTOR</div>
+            <div class="agent-role">Contrôle Qualité — Valide la cohérence de chaque candidature</div>
+            <div class="agent-indicator"><div class="agent-dot-live" style="background:var(--green)"></div><span style="font-size:10px;color:var(--green)">Actif</span></div>
+          </div>
+          <div class="agent-card" onclick="showPage('email')" style="--a-color:#EC4899">
+            <div class="agent-avatar" style="background:rgba(236,72,153,0.1);font-size:22px">📧</div>
+            <div class="agent-name">SOFIA</div>
+            <div class="agent-role">Email & Contact — Trouve les contacts RH et rédige les emails</div>
+            <div class="agent-indicator"><div class="agent-dot-live" style="background:#EC4899"></div><span style="font-size:10px;color:#F9A8D4">Actif</span></div>
+          </div>
+        </div>
+
+        <div class="g2">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-trending-up"></i>Dernières offres analysées</div>
+            <div id="d-off"><div class="empty"><i class="ti ti-search"></i><div class="empty-title">Aucune offre</div><div class="empty-sub">Lancez ARIA pour commencer</div></div></div>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-activity"></i>Activité récente</div>
+            <div id="d-act"><div class="empty"><i class="ti ti-bolt"></i><div class="empty-title">Aucune activité</div><div class="empty-sub">Vos actions apparaîtront ici</div></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFIL -->
+      <div class="page" id="page-profil">
+        <div class="section-title">Mon profil</div>
+        <div class="section-sub">Ces informations sont utilisées par tous les agents pour personnaliser vos candidatures.</div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-user"></i>Informations personnelles</div>
+            <label>Nom complet</label><input type="text" id="p-nom" placeholder="Riyad BOUCHFAR">
+            <label>Email</label><input type="text" id="p-email" placeholder="riyad@email.com">
+            <label>Téléphone</label><input type="text" id="p-tel" placeholder="07 82 78 28 35">
+            <label>Ville</label><input type="text" id="p-ville" placeholder="Montfermeil, 93370">
+            <label>LinkedIn</label><input type="text" id="p-linkedin" placeholder="linkedin.com/in/...">
+            <label>Poste recherché</label><input type="text" id="p-poste" placeholder="Alternance Comptabilité Immobilier">
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-school"></i>Formation</div>
+            <label>Diplôme</label><input type="text" id="p-dip" placeholder="DCG — Diplôme de Comptabilité et de Gestion">
+            <label>École</label><input type="text" id="p-ech" placeholder="ENGDE, Paris 11e">
+            <label>Année</label><input type="text" id="p-an" placeholder="Dernière année — depuis 09/2022">
+            <label>Axes / Spécialisations</label>
+            <div class="chips" id="ax-chips"></div>
+            <div style="display:flex;gap:6px;margin-top:8px"><input type="text" id="ax-in" placeholder="Ajouter un axe..." style="flex:1"><button class="btn btn-sm" onclick="addAxe()">+</button></div>
+          </div>
+        </div>
+
+        <div class="g2" style="margin-top:16px">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-briefcase"></i>Expériences professionnelles</div>
+            <div id="exp-list"></div>
+            <button class="btn btn-sm" style="margin-top:10px;width:100%" onclick="addExp()"><i class="ti ti-plus"></i>Ajouter une expérience</button>
+          </div>
+          <div class="card">
+            <div class="card-title"><i class="ti ti-tools"></i>Compétences & logiciels</div>
+            <label>Logiciels maîtrisés</label>
+            <div class="tag-wrap" id="log-w" onclick="document.getElementById('log-in').focus()"><input type="text" id="log-in" placeholder="Entrée pour ajouter..." onkeydown="addT(event,'log')"></div>
+            <label>Langues</label>
+            <div class="tag-wrap" id="lng-w" onclick="document.getElementById('lng-in').focus()"><input type="text" id="lng-in" placeholder="Français (natif)..." onkeydown="addT(event,'lng')"></div>
+            <label>Compétences clés</label>
+            <div class="tag-wrap" id="cmp-w" onclick="document.getElementById('cmp-in').focus()"><input type="text" id="cmp-in" placeholder="Comptabilité générale..." onkeydown="addT(event,'cmp')"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-title"><i class="ti ti-align-left"></i>Accroche professionnelle</div>
+          <textarea id="p-bio" rows="4" placeholder="Votre profil en 3-4 phrases percutantes..."></textarea>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:16px">
+          <button class="btn btn-glow" onclick="saveP()"><i class="ti ti-device-floppy"></i>Sauvegarder</button>
+          <button class="btn" onclick="loadDef()"><i class="ti ti-refresh"></i>Charger profil par défaut</button>
+        </div>
+      </div>
+
+      <!-- ARIA - RECHERCHE -->
+      <div class="page" id="page-search">
+        <div class="section-title">ARIA — Agent de Recherche</div>
+        <div class="section-sub">Analyse des offres sur toutes les plateformes d'emploi</div>
+
+        <div class="tabs">
+          <div class="tab active" id="t-paste" onclick="switchTab('paste')">Coller une offre</div>
+          <div class="tab" id="t-csv" onclick="switchTab('csv')">Importer CSV</div>
+          <div class="tab" id="t-scrape" onclick="switchTab('scrape')">Scraping auto</div>
+        </div>
+
+        <div id="paste-p">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-clipboard-text"></i>Coller le texte ou l'URL de l'offre</div>
+            <textarea id="off-in" rows="7" placeholder="Collez ici le texte complet de l'offre (LinkedIn, Indeed, HelloWork, Manpower, Adecco, France Travail...)"></textarea>
+            <div style="display:flex;gap:10px;margin-top:12px">
+              <button class="btn btn-glow" onclick="analyser()"><i class="ti ti-cpu"></i>ARIA analyse</button>
+              <button class="btn" onclick="document.getElementById('off-in').value=''"><i class="ti ti-x"></i>Effacer</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="csv-p" style="display:none">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-table-import"></i>Import CSV</div>
+            <div class="drop-zone" onclick="document.getElementById('csv-f').click()">
+              <i class="ti ti-file-spreadsheet"></i>
+              Cliquez ou glissez votre fichier CSV<br>
+              <small style="font-size:11px;color:var(--muted2)">Colonnes : titre, entreprise, lieu, description, url</small>
+            </div>
+            <input type="file" id="csv-f" accept=".csv" style="display:none" onchange="importCSV(event)">
+          </div>
+        </div>
+
+        <div id="scrape-p" style="display:none">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-world-search"></i>Recherche automatique</div>
+            <div class="platform-grid">
+              <div class="platform-btn active" id="plat-linkedin" onclick="selectPlatform('linkedin')"><i class="ti ti-brand-linkedin"></i>LinkedIn</div>
+              <div class="platform-btn" id="plat-indeed" onclick="selectPlatform('indeed')"><i class="ti ti-search"></i>Indeed</div>
+              <div class="platform-btn" id="plat-hellowork" onclick="selectPlatform('hellowork')"><i class="ti ti-briefcase"></i>HelloWork</div>
+              <div class="platform-btn" id="plat-manpower" onclick="selectPlatform('manpower')"><i class="ti ti-building"></i>Manpower</div>
+              <div class="platform-btn" id="plat-adecco" onclick="selectPlatform('adecco')"><i class="ti ti-users"></i>Adecco</div>
+              <div class="platform-btn" id="plat-francetravail" onclick="selectPlatform('francetravail')"><i class="ti ti-flag"></i>France Travail</div>
+            </div>
+            <div class="form-row">
+              <div><label>Mots-clés</label><input type="text" id="kw" placeholder="comptable immobilier alternance"></div>
+              <div><label>Périmètre</label><select id="km"><option value="10">10 km</option><option value="20" selected>20 km</option><option value="30">30 km</option><option value="50">50 km</option></select></div>
+            </div>
+            <button class="btn btn-glow" style="margin-top:12px" onclick="openPlatform()"><i class="ti ti-external-link"></i>Ouvrir la plateforme</button>
+            <div class="info-box" style="margin-top:12px"><i class="ti ti-info-circle"></i> La plateforme s'ouvre dans un nouvel onglet. Copiez les offres qui vous intéressent et collez-les dans l'onglet "Coller une offre".</div>
+          </div>
+        </div>
+
+        <div id="off-res" style="margin-top:20px"></div>
+      </div>
+
+      <!-- LÉNA - GÉNÉRATION -->
+      <div class="page" id="page-gen">
+        <div class="section-title">LÉNA + MARCUS + VICTOR</div>
+        <div class="section-sub">Génération de CV et lettre de motivation — 4 agents en séquence</div>
+
+        <div class="card" style="margin-bottom:16px">
+          <div class="card-title"><i class="ti ti-target"></i>Offre cible</div>
+          <textarea id="g-off" rows="4" placeholder="Sélectionnez une offre depuis ARIA, ou collez la description ici..."></textarea>
+          <div class="form-row" style="margin-top:10px">
+            <div><label>Entreprise</label><input type="text" id="g-ent" placeholder="Nom de l'entreprise"></div>
+            <div><label>Notes personnalisées</label><input type="text" id="g-not" placeholder="Points à valoriser..."></div>
+          </div>
+        </div>
+
+        <!-- ARIA - Agent 1 -->
+        <div class="agent-step" id="ag1">
+          <div class="agent-step-header" onclick="tA('ag1')">
+            <div class="agent-step-left">
+              <div class="agent-step-avatar" style="background:rgba(0,212,255,0.1)">🔍</div>
+              <div class="agent-status-dot dot-idle" id="d1"></div>
+              ARIA — Analyse de l'offre
+            </div>
+            <i class="ti ti-chevron-down" style="color:var(--muted)"></i>
+          </div>
+          <div class="agent-body" id="b1">
+            <div class="ai-output" id="o1">En attente du lancement...</div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="btn btn-success btn-sm" id="v1" onclick="runA(2)" disabled><i class="ti ti-check"></i>Valider → MARCUS</button>
+              <button class="btn btn-sm" onclick="editA(1)"><i class="ti ti-edit"></i>Modifier</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- MARCUS - Agent 2 -->
+        <div class="agent-step" id="ag2">
+          <div class="agent-step-header" onclick="tA('ag2')">
+            <div class="agent-step-left">
+              <div class="agent-step-avatar" style="background:rgba(245,158,11,0.1)">📊</div>
+              <div class="agent-status-dot dot-idle" id="d2"></div>
+              MARCUS — Score de matching
+            </div>
+            <i class="ti ti-chevron-down" style="color:var(--muted)"></i>
+          </div>
+          <div class="agent-body" id="b2">
+            <div class="ai-output" id="o2">En attente d'ARIA...</div>
+            <div style="display:flex;gap:8px;margin-top:12px">
+              <button class="btn btn-success btn-sm" id="v2" onclick="runA(3)" disabled><i class="ti ti-check"></i>Valider → LÉNA</button>
+              <button class="btn btn-sm" onclick="editA(2)"><i class="ti ti-edit"></i>Modifier</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LÉNA - Agent 3 -->
+        <div class="agent-step" id="ag3">
+          <div class="agent-step-header" onclick="tA('ag3')">
+            <div class="agent-step-left">
+              <div class="agent-step-avatar" style="background:rgba(124,58,237,0.1)">✍️</div>
+              <div class="agent-status-dot dot-idle" id="d3"></div>
+              LÉNA — Rédaction CV + Lettre
+            </div>
+            <i class="ti ti-chevron-down" style="color:var(--muted)"></i>
+          </div>
+          <div class="agent-body" id="b3">
+            <div class="ai-output" id="o3">En attente de MARCUS...</div>
+            <div id="dl-actions" style="display:none;gap:8px;flex-wrap:wrap;margin-top:12px">
+              <button class="btn btn-primary btn-sm" onclick="dlPDF('cv')"><i class="ti ti-download"></i>CV PDF</button>
+              <button class="btn btn-primary btn-sm" onclick="dlPDF('lm')"><i class="ti ti-download"></i>Lettre PDF</button>
+              <button class="btn btn-sm" onclick="runA(4)"><i class="ti ti-arrow-right"></i>→ VICTOR</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VICTOR - Agent 4 -->
+        <div class="agent-step" id="ag4">
+          <div class="agent-step-header" onclick="tA('ag4')">
+            <div class="agent-step-left">
+              <div class="agent-step-avatar" style="background:rgba(16,185,129,0.1)">🛡️</div>
+              <div class="agent-status-dot dot-idle" id="d4"></div>
+              VICTOR — Contrôle qualité
+            </div>
+            <i class="ti ti-chevron-down" style="color:var(--muted)"></i>
+          </div>
+          <div class="agent-body" id="b4">
+            <div class="ai-output" id="o4">En attente de LÉNA...</div>
+            <div style="margin-top:12px">
+              <button class="btn btn-success btn-sm" id="v4" onclick="finalize()" disabled><i class="ti ti-check"></i>Valider la candidature → Pipeline</button>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px;display:flex;gap:10px">
+          <button class="btn btn-glow" onclick="runA(1)"><i class="ti ti-player-play"></i>Lancer tous les agents</button>
+          <button class="btn" onclick="resetAgents()"><i class="ti ti-refresh"></i>Réinitialiser</button>
+        </div>
+      </div>
+
+      <!-- SOFIA - EMAIL -->
+      <div class="page" id="page-email">
+        <div class="section-title">SOFIA — Agent Email</div>
+        <div class="section-sub">Recherche de contacts RH et rédaction d'emails professionnels</div>
+
+        <div class="g2">
+          <div class="card">
+            <div class="card-title"><i class="ti ti-search"></i>Rechercher un contact</div>
+            <label>Entreprise cible</label><input type="text" id="em-ent" placeholder="Sogenial Immobilier...">
+            <label>Site web (optionnel)</label><input type="text" id="em-sit" placeholder="https://www.entreprise.fr">
+            <button class="btn btn-glow" style="margin-top:12px;width:100%" onclick="findContact()"><i class="ti ti-cpu"></i>SOFIA recherche</button>
+            <div id="ct-res" style="margin-top:12px"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title"><i class="ti ti-mail"></i>Email généré</div>
+            <label>Destinataire</label><input type="email" id="em-to" placeholder="contact@entreprise.fr">
+            <label>Objet</label><input type="text" id="em-sub" placeholder="Candidature alternance — Riyad BOUCHFAR">
+            <label>Message</label><textarea id="em-bod" rows="8" placeholder="SOFIA va rédiger l'email ici..."></textarea>
+            <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+              <button class="btn btn-glow btn-sm" onclick="genEmail()"><i class="ti ti-cpu"></i>Générer</button>
+              <button class="btn btn-success btn-sm" onclick="openMail()"><i class="ti ti-mail-forward"></i>Ouvrir Mail</button>
+              <button class="btn btn-sm" onclick="copyEmail()"><i class="ti ti-copy"></i>Copier</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PIPELINE -->
+      <div class="page" id="page-pipeline">
+        <div class="section-title">Pipeline de candidatures</div>
+        <div class="section-sub">Suivez l'avancement de chaque candidature</div>
+        <div class="pipeline-wrap">
+          <div class="pipe-col">
+            <div class="pipe-col-title">À postuler <span class="pipe-count" id="cnt-ap">0</span></div>
+            <div id="c-ap"></div>
+          </div>
+          <div class="pipe-col">
+            <div class="pipe-col-title">Postulé <span class="pipe-count" id="cnt-po">0</span></div>
+            <div id="c-po"></div>
+          </div>
+          <div class="pipe-col">
+            <div class="pipe-col-title">Relance <span class="pipe-count" id="cnt-re">0</span></div>
+            <div id="c-re"></div>
+          </div>
+          <div class="pipe-col">
+            <div class="pipe-col-title">Entretien <span class="pipe-count" id="cnt-en">0</span></div>
+            <div id="c-en"></div>
+          </div>
+          <div class="pipe-col">
+            <div class="pipe-col-title">Refus <span class="pipe-count" id="cnt-rf">0</span></div>
+            <div id="c-rf"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<div class="notif" id="notif"></div>
+
+<script>
+// ============================================================
+// CONFIG — à remplir après création Supabase
+// ============================================================
+const SUPABASE_URL = 'https://yugyxmzlocqfvkwasgub.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1Z3l4bXpsb2NxZnZrd2FzZ3ViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNzYwMzAsImV4cCI6MjA5Njg1MjAzMH0.chcY1YU4aXx3KwW__2tn-TWJwFTKJdw7cgr';
+const ANTHROPIC_KEY = localStorage.getItem('nx_ant_key') || '';
+
+let _supabase = null;
+let currentUser = null;
+
+function initSupabase() {
+  if (SUPABASE_URL !== 'https://yugyxmzlocqfvkwasgub.supabase.co') {
+    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  }
+}
+
+// ============================================================
+// AUTH — OTP par email via Supabase
+// ============================================================
+let pendingEmail = '';
+let otpCode = '';
+
+async function sendCode() {
+  const email = document.getElementById('auth-email').value.trim();
+  if (!email || !email.includes('@')) { showAuthErr('email', 'Email invalide'); return; }
+  pendingEmail = email;
+  const btn = document.getElementById('btn-send-code');
+  btn.disabled = true; btn.textContent = 'Envoi en cours...';
+
+  if (_supabase) {
+    const { error } = await _supabase.auth.signInWithOtp({ email });
+    if (error) { showAuthErr('email', error.message); btn.disabled=false; btn.textContent='Envoyer le code →'; return; }
+  } else {
+    // Mode local sans Supabase — code fixe pour demo
+    otpCode = '123456';
+    ntf('Mode local : code 123456', 'info');
+  }
+
+  // Passer à l'étape OTP
+  document.getElementById('step-email').classList.remove('active');
+  document.getElementById('step-otp').classList.add('active');
+  document.querySelector('#otp-sub strong').textContent = email;
+  buildOTPInputs();
+  btn.disabled=false; btn.textContent='Envoyer le code →';
+}
+
+function buildOTPInputs() {
+  const grid = document.getElementById('otp-inputs');
+  grid.innerHTML = '';
+  for (let i = 0; i < 6; i++) {
+    const inp = document.createElement('input');
+    inp.type = 'text'; inp.maxLength = 1; inp.className = '';
+    inp.style.cssText = 'text-align:center;font-size:22px;font-weight:700;padding:12px 4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#fff;outline:none;font-family:Space Grotesk,sans-serif;transition:all .2s';
+    inp.addEventListener('input', e => {
+      e.target.style.borderColor='var(--cyan)';
+      if (e.target.value && i < 5) grid.children[i+1].focus();
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key==='Backspace' && !e.target.value && i > 0) grid.children[i-1].focus();
+    });
+    inp.addEventListener('focus', e => e.target.style.borderColor='var(--cyan)');
+    grid.appendChild(inp);
+  }
+  grid.children[0].focus();
+}
+
+function getOTPValue() {
+  return Array.from(document.getElementById('otp-inputs').children).map(i=>i.value).join('');
+}
+
+async function verifyCode() {
+  const code = getOTPValue();
+  if (code.length < 6) { showAuthErr('otp', 'Entrez les 6 chiffres'); return; }
+  const btn = document.getElementById('btn-verify');
+  btn.disabled=true; btn.textContent='Vérification...';
+
+  if (_supabase) {
+    const { data, error } = await _supabase.auth.verifyOtp({ email: pendingEmail, token: code, type: 'email' });
+    if (error) { showAuthErr('otp', 'Code incorrect ou expiré'); btn.disabled=false; btn.textContent='Vérifier le code →'; return; }
+    currentUser = data.user;
+  } else {
+    if (code !== '123456' && code !== otpCode) {
+      showAuthErr('otp', 'Code incorrect (essayez 123456)');
+      btn.disabled=false; btn.textContent='Vérifier le code →'; return;
+    }
+    currentUser = { email: pendingEmail, id: 'local-' + pendingEmail };
+  }
+
+  document.getElementById('auth-ok-otp').style.display='block';
+  document.getElementById('auth-ok-otp').textContent = '✓ Connecté avec succès !';
+  setTimeout(() => launchApp(), 800);
+}
+
+function backToEmail() {
+  document.getElementById('step-otp').classList.remove('active');
+  document.getElementById('step-email').classList.add('active');
+}
+
+function showAuthErr(step, msg) {
+  const el = document.getElementById('auth-err-' + step);
+  el.textContent = msg; el.style.display='block';
+  setTimeout(() => el.style.display='none', 4000);
+}
+
+function launchApp() {
+  document.getElementById('auth-screen').style.display='none';
+  document.getElementById('app').classList.add('visible');
+  // Set user info
+  const em = currentUser.email;
+  document.getElementById('user-email-display').textContent = em;
+  document.getElementById('user-av').textContent = em.charAt(0).toUpperCase();
+  // Load profile
+  loadSavedProfil();
+  ntf('Bienvenue sur NEXUS !', 'ok');
+}
+
+async function logout() {
+  if (_supabase) await _supabase.auth.signOut();
+  currentUser = null;
+  document.getElementById('auth-screen').style.display='flex';
+  document.getElementById('app').classList.remove('visible');
+  document.getElementById('step-otp').classList.remove('active');
+  document.getElementById('step-email').classList.add('active');
+  document.getElementById('auth-email').value='';
+  ntf('Déconnecté', 'info');
+}
+
+// ============================================================
+// APP STATE
+// ============================================================
+let S = {
+  offs:[], cands:[], ao:{}, prof:null,
+  st:{off:0,cv:0,em:0,ca:0},
+  tags:{log:[],lng:[],cmp:[]}, axes:[],
+  selectedPlatform: 'linkedin'
+};
+
+const PAGE_META = {
+  dash:['Tableau de bord','Vue d\'ensemble'],
+  profil:['Mon profil','Gérez vos informations'],
+  search:['ARIA — Recherche d\'offres','Analyse multi-plateformes'],
+  gen:['LÉNA — Génération de documents','CV et lettres personnalisés'],
+  email:['SOFIA — Email de contact','Trouvez et contactez les RH'],
+  pipeline:['Pipeline','Suivi de vos candidatures']
+};
+
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const nav = document.getElementById('nav-'+p);
+  if (nav) nav.classList.add('active');
+  const [title, sub] = PAGE_META[p] || [p, ''];
+  document.getElementById('page-title').textContent = title;
+  document.getElementById('page-sub').textContent = sub;
+}
+
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.getElementById('t-'+t).classList.add('active');
+  ['paste-p','csv-p','scrape-p'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById(t+'-p').style.display='block';
+}
+
+function tA(id) {
+  const n = id.replace('ag','');
+  document.getElementById('b'+n).classList.toggle('open');
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+function ntf(msg, type='info') {
+  const n = document.getElementById('notif');
+  n.textContent = msg;
+  n.className = 'notif show notif-' + (type==='ok'?'ok':type==='err'?'err':'info');
+  clearTimeout(n._t);
+  n._t = setTimeout(()=>n.classList.remove('show'), 3500);
+}
+
+// ============================================================
+// PROFIL
+// ============================================================
+function addT(e, t) {
+  if (e.key==='Enter' && e.target.value.trim()) {
+    const v = e.target.value.trim();
+    S.tags[t].push(v);
+    const w = document.getElementById(t+'-w');
+    const tg = document.createElement('span');
+    tg.className = 'tag';
+    tg.innerHTML = v + '<i class="ti ti-x" onclick="rmT(this,\''+t+'\',\''+v+'\')"></i>';
+    w.insertBefore(tg, document.getElementById(t+'-in'));
+    e.target.value = '';
+  }
+}
+
+function rmT(el, t, v) { S.tags[t]=S.tags[t].filter(x=>x!==v); el.parentElement.remove(); }
+
+function addAxe() {
+  const i=document.getElementById('ax-in'); const v=i.value.trim(); if(!v)return;
+  S.axes.push(v);
+  const c=document.createElement('span'); c.className='chip';
+  c.textContent=v; c.onclick=()=>{S.axes=S.axes.filter(a=>a!==v);c.remove()};
+  document.getElementById('ax-chips').appendChild(c); i.value='';
+}
+
+function addExp() {
+  const id='x'+Date.now();
+  const d=document.createElement('div'); d.className='card'; d.style.marginBottom='10px'; d.id=id;
+  d.innerHTML=`<div class="form-row">
+    <div><label>Poste</label><input type="text" placeholder="Junior PE Alternance"></div>
+    <div><label>Entreprise</label><input type="text" placeholder="Aplitec"></div>
+  </div>
+  <div class="form-row" style="margin-top:10px">
+    <div><label>Durée</label><input type="text" placeholder="09/2024 – 07/2025"></div>
+    <div><label>Type</label><select><option>Alternance</option><option>Stage</option><option>CDI</option><option>CDD</option></select></div>
+  </div>
+  <label>Missions</label><textarea rows="3" placeholder="Tenue comptabilité fonds..."></textarea>
+  <button class="btn btn-danger btn-sm" style="margin-top:8px" onclick="document.getElementById('${id}').remove()"><i class="ti ti-trash"></i> Supprimer</button>`;
+  document.getElementById('exp-list').appendChild(d);
+}
+
+function gP() { return S.prof || JSON.parse(localStorage.getItem('nx_p')||'{}') || {}; }
+
+function saveP() {
+  S.prof = {
+    nom:document.getElementById('p-nom').value,
+    email:document.getElementById('p-email').value,
+    tel:document.getElementById('p-tel').value,
+    ville:document.getElementById('p-ville').value,
+    linkedin:document.getElementById('p-linkedin').value,
+    poste:document.getElementById('p-poste').value,
+    diplome:document.getElementById('p-dip').value,
+    ecole:document.getElementById('p-ech').value,
+    annee:document.getElementById('p-an').value,
+    bio:document.getElementById('p-bio').value,
+    log:[...S.tags.log], lng:[...S.tags.lng], cmp:[...S.tags.cmp], axes:[...S.axes]
+  };
+  try { localStorage.setItem('nx_p', JSON.stringify(S.prof)); } catch(e){}
+  // Sync Supabase
+  if (_supabase && currentUser) {
+    _supabase.from('profiles').upsert({ user_id: currentUser.id, email: currentUser.email, data: S.prof }).then(()=>{});
+  }
+  ntf('Profil sauvegardé ✓', 'ok');
+}
+
+function loadDef() {
+  const d = {
+    nom:'Riyad BOUCHFAR', email:'riyad.bcf.2@gmail.com', tel:'07 82 78 28 35',
+    ville:'Montfermeil, 93370', linkedin:'linkedin.com/in/riyadbouchfar-dcg-alternance-3e-annee',
+    poste:'Alternance Comptabilité Immobilier (SCPI, SCI, OPPCI)',
+    diplome:'DCG — Diplôme de Comptabilité et de Gestion', ecole:'ENGDE, Paris 11e',
+    annee:'Dernière année — depuis 09/2022',
+    bio:"Étudiant en DCG dernière année, 3 ans d'expérience cumulée en alternance : 2 ans en comptabilité d'entreprise (L'École Multimédia — Sage 100, TVA, paies DSN, rapprochement bancaire) et 1 an en comptabilité de fonds PE au cabinet Aplitec (FCPI, SLP, FCT, FCPR, OPC, VL, BDF, AIFM, DAS2). Passionné par la comptabilité immobilière.",
+    log:['Sage Génération Expert','Ciel Compta (Sage)','Fulll','Dext','Sage Paie','Factofrance','Suite Office'],
+    lng:['Français (natif)','Espagnol (B1)','Anglais (A2)'],
+    cmp:['Comptabilité générale','Comptabilité de fonds PE','Valeurs liquidatives','TVA','Paie & DSN','Rapprochement bancaire','BDF/AIFM/DAS2','Clôture des comptes'],
+    axes:['Comptabilité & Finance','Droit & Fiscalité','Management & SI','Communication & Anglais']
+  };
+  document.getElementById('p-nom').value=d.nom;
+  document.getElementById('p-email').value=d.email;
+  document.getElementById('p-tel').value=d.tel;
+  document.getElementById('p-ville').value=d.ville;
+  document.getElementById('p-linkedin').value=d.linkedin;
+  document.getElementById('p-poste').value=d.poste;
+  document.getElementById('p-dip').value=d.diplome;
+  document.getElementById('p-ech').value=d.ecole;
+  document.getElementById('p-an').value=d.annee;
+  document.getElementById('p-bio').value=d.bio;
+  S.tags={log:[...d.log],lng:[...d.lng],cmp:[...d.cmp]}; S.axes=[...d.axes];
+  ['log','lng','cmp'].forEach(t=>{
+    const w=document.getElementById(t+'-w');
+    w.querySelectorAll('.tag').forEach(x=>x.remove());
+    d[t].forEach(v=>{const tg=document.createElement('span');tg.className='tag';tg.innerHTML=v+'<i class="ti ti-x" onclick="rmT(this,\''+t+'\',\''+v+'\')"></i>';w.insertBefore(tg,document.getElementById(t+'-in'))});
+  });
+  const chips=document.getElementById('ax-chips'); chips.innerHTML='';
+  d.axes.forEach(v=>{const c=document.createElement('span');c.className='chip';c.textContent=v;c.onclick=()=>{S.axes=S.axes.filter(a=>a!==v);c.remove()};chips.appendChild(c)});
+  ntf('Profil par défaut chargé', 'ok');
+}
+
+function loadSavedProfil() {
+  try {
+    const saved = localStorage.getItem('nx_p');
+    if (saved) {
+      S.prof = JSON.parse(saved);
+      const p = S.prof;
+      if (p.nom) document.getElementById('p-nom').value=p.nom;
+      if (p.email) document.getElementById('p-email').value=p.email;
+      if (p.tel) document.getElementById('p-tel').value=p.tel;
+      if (p.ville) document.getElementById('p-ville').value=p.ville;
+      if (p.linkedin) document.getElementById('p-linkedin').value=p.linkedin;
+      if (p.poste) document.getElementById('p-poste').value=p.poste;
+      if (p.diplome) document.getElementById('p-dip').value=p.diplome;
+      if (p.ecole) document.getElementById('p-ech').value=p.ecole;
+      if (p.annee) document.getElementById('p-an').value=p.annee;
+      if (p.bio) document.getElementById('p-bio').value=p.bio;
+      if (p.log) { S.tags.log=[...p.log]; p.log.forEach(v=>{const w=document.getElementById('log-w');const tg=document.createElement('span');tg.className='tag';tg.innerHTML=v+'<i class="ti ti-x" onclick="rmT(this,\'log\',\''+v+'\')"></i>';w.insertBefore(tg,document.getElementById('log-in'))}); }
+      if (p.lng) { S.tags.lng=[...p.lng]; p.lng.forEach(v=>{const w=document.getElementById('lng-w');const tg=document.createElement('span');tg.className='tag';tg.innerHTML=v+'<i class="ti ti-x" onclick="rmT(this,\'lng\',\''+v+'\')"></i>';w.insertBefore(tg,document.getElementById('lng-in'))}); }
+      if (p.cmp) { S.tags.cmp=[...p.cmp]; p.cmp.forEach(v=>{const w=document.getElementById('cmp-w');const tg=document.createElement('span');tg.className='tag';tg.innerHTML=v+'<i class="ti ti-x" onclick="rmT(this,\'cmp\',\''+v+'\')"></i>';w.insertBefore(tg,document.getElementById('cmp-in'))}); }
+      if (p.axes) { S.axes=[...p.axes]; const chips=document.getElementById('ax-chips'); p.axes.forEach(v=>{const c=document.createElement('span');c.className='chip';c.textContent=v;c.onclick=()=>{S.axes=S.axes.filter(a=>a!==v);c.remove()};chips.appendChild(c)}); }
+    }
+  } catch(e) {}
+}
+
+// ============================================================
+// CLAUDE API
+// ============================================================
+async function claude(prompt, maxTokens=1500) {
+  const r = await fetch('https://api.anthropic.com/v1/messages', {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'x-api-key': ANTHROPIC_KEY,
+      'anthropic-version':'2023-06-01',
+      'anthropic-dangerous-direct-browser-access':'true'
+    },
+    body: JSON.stringify({
+      model:'claude-haiku-4-5-20251001',
+      max_tokens: maxTokens,
+      messages:[{role:'user',content:prompt}]
+    })
+  });
+  if (!r.ok) { const e=await r.text(); throw new Error('API '+r.status+': '+e.substring(0,150)); }
+  const d = await r.json();
+  return d.content.map(i=>i.text||'').join('\n');
+}
+
+// ============================================================
+// ARIA — ANALYSE OFFRES
+// ============================================================
+async function analyser() {
+  const tx = document.getElementById('off-in').value.trim();
+  if (!tx) { ntf('Entrez une offre à analyser', 'err'); return; }
+  const btn = document.querySelector('#paste-p .btn-glow');
+  btn.disabled=true; btn.innerHTML='<i class="ti ti-loader"></i> ARIA analyse...';
+  try {
+    const res = await claude('Retourne UNIQUEMENT ce JSON (pas de markdown) pour cette offre:\n{"titre":"","entreprise":"","lieu":"","type_contrat":"","secteur":"","competences_requises":[],"logiciels":[],"points_cles":""}\n\nOffre:\n'+tx);
+    let data;
+    try { data=JSON.parse(res.replace(/```json|```/g,'').trim()); }
+    catch(e) { data={titre:'Offre',entreprise:'',lieu:'',type_contrat:'',secteur:'',competences_requises:[],logiciels:[],points_cles:res}; }
+    data.tx=tx;
+    S.offs.unshift(data); S.st.off++;
+    document.getElementById('s-off').textContent=S.st.off;
+    affOff(); act('ARIA — offre analysée: '+(data.titre||'')+(data.entreprise?' — '+data.entreprise:''),'cyan');
+    ntf('Offre analysée par ARIA ✓', 'ok');
+    document.getElementById('off-in').value='';
+  } catch(e) { ntf('Erreur: '+e.message, 'err'); }
+  btn.disabled=false; btn.innerHTML='<i class="ti ti-cpu"></i> ARIA analyse';
+}
+
+function calcScore(o) {
+  const p=gP(); let s=50;
+  const comps=[...(p.cmp||[]),...(p.log||[])].map(x=>x.toLowerCase());
+  (o.competences_requises||[]).forEach(c=>{if(comps.some(pc=>pc.includes(c.toLowerCase())||c.toLowerCase().includes(pc)))s+=6});
+  (o.logiciels||[]).forEach(l=>{if(comps.some(pc=>pc.includes(l.toLowerCase())))s+=5});
+  if((p.poste||'').toLowerCase().includes('immobilier')&&(o.secteur||'').toLowerCase().includes('immobilier'))s+=15;
+  return Math.min(98,Math.max(20,s));
+}
+
+function affOff() {
+  const el=document.getElementById('off-res');
+  const dl=document.getElementById('d-off');
+  if (!S.offs.length) { el.innerHTML=''; return; }
+  el.innerHTML=`<div class="section-title" style="margin-bottom:14px">${S.offs.length} offre${S.offs.length>1?'s':''} analysée${S.offs.length>1?'s':''}</div><div class="offer-list">`;
+  dl.innerHTML='';
+  S.offs.slice(0,15).forEach((o,i)=>{
+    const sc=calcScore(o);
+    const pct=Math.round(sc*3.6);
+    const cls=sc>=75?'score-high':sc>=50?'score-med':'score-low';
+    const card=document.createElement('div'); card.className='offer-card';
+    card.innerHTML=`<div style="display:flex;gap:14px;align-items:flex-start">
+      <div class="${cls} score-ring" style="--pct:${pct}deg"><span>${sc}%</span></div>
+      <div style="flex:1">
+        <div class="offer-title">${o.titre||'Poste'}</div>
+        <div class="offer-company">${o.entreprise||'Entreprise'}${o.lieu?' · '+o.lieu:''}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+          ${o.type_contrat?`<span class="badge badge-cyan">${o.type_contrat}</span>`:''}
+          ${o.secteur?`<span class="badge badge-violet">${o.secteur}</span>`:''}
+          ${(o.competences_requises||[]).slice(0,3).map(c=>`<span class="badge" style="background:rgba(255,255,255,0.05);color:var(--muted);border-color:var(--border2)">${c}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary btn-sm" onclick="selOff(${i})"><i class="ti ti-file-text"></i>Générer docs</button>
+      <button class="btn btn-sm" onclick="addPipe(${i})"><i class="ti ti-plus"></i>Pipeline</button>
+    </div>`;
+    el.querySelector('.offer-list').appendChild(card);
+    if (i<4) {
+      const m=document.createElement('div'); m.className='activity-item';
+      m.innerHTML=`<div class="activity-dot" style="background:${sc>=75?'var(--green)':sc>=50?'var(--amber)':'var(--red)'}"></div>${o.titre||'Poste'} — ${o.entreprise||''}<span class="activity-time">${sc}%</span>`;
+      dl.appendChild(m);
+    }
+  });
+  el.innerHTML += '</div>';
+}
+
+function selOff(i) {
+  const o=S.offs[i];
+  document.getElementById('g-off').value=o.tx||[o.titre,o.entreprise,o.lieu,o.points_cles].filter(Boolean).join('\n');
+  document.getElementById('g-ent').value=o.entreprise||'';
+  showPage('gen'); ntf('Offre transmise à LÉNA ✓', 'ok');
+}
+
+function addPipe(i) {
+  const o=S.offs[i];
+  S.cands.push({titre:o.titre,ent:o.entreprise,st:'ap',date:new Date().toLocaleDateString('fr-FR')});
+  S.st.ca++; document.getElementById('s-ca').textContent=S.st.ca;
+  upPipe(); ntf('Ajouté au pipeline ✓', 'ok');
+}
+
+// ============================================================
+// PLATFORMS
+// ============================================================
+function selectPlatform(p) {
+  document.querySelectorAll('.platform-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('plat-'+p).classList.add('active');
+  S.selectedPlatform=p;
+}
+
+function openPlatform() {
+  const kw=document.getElementById('kw').value||'comptable alternance Paris';
+  const km=document.getElementById('km').value;
+  const urls={
+    linkedin:'https://www.linkedin.com/jobs/search/?keywords='+encodeURIComponent(kw)+'&location=Paris&distance='+km,
+    indeed:'https://fr.indeed.com/jobs?q='+encodeURIComponent(kw)+'&l=Paris&radius='+km,
+    hellowork:'https://www.hellowork.com/fr-fr/emploi/recherche.html?k='+encodeURIComponent(kw)+'&l=Paris',
+    manpower:'https://www.manpower.fr/recherche-emploi?q='+encodeURIComponent(kw)+'&where=Paris',
+    adecco:'https://www.adecco.fr/recherche-emploi/?search='+encodeURIComponent(kw)+'&location=Paris',
+    francetravail:'https://candidat.francetravail.fr/offres/recherche?motsCles='+encodeURIComponent(kw)+'&lieuTravail=Paris'
+  };
+  window.open(urls[S.selectedPlatform]||urls.linkedin,'_blank');
+  ntf('Plateforme ouverte — copiez les offres dans "Coller une offre"', 'info');
+}
+
+function importCSV(e) {
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=function(ev){
+    const ls=ev.target.result.split('\n');
+    const hs=ls[0].split(',').map(h=>h.trim().toLowerCase().replace(/"/g,''));
+    let ct=0;
+    ls.slice(1).forEach(l=>{
+      if(!l.trim())return;
+      const cs=l.split(',').map(c=>c.trim().replace(/"/g,''));
+      const o={}; hs.forEach((h,i)=>o[h]=cs[i]||'');
+      S.offs.unshift({titre:o.titre||o.title||o.poste||'Poste importé',entreprise:o.entreprise||o.company||'',lieu:o.lieu||o.location||'',tx:Object.values(o).join(' '),type_contrat:'',secteur:'',competences_requises:[],logiciels:[],points_cles:''});
+      ct++; S.st.off++;
+    });
+    document.getElementById('s-off').textContent=S.st.off;
+    affOff(); ntf(ct+' offres importées ✓', 'ok');
+  };
+  r.readAsText(f);
+}
+
+// ============================================================
+// AGENTS — GÉNÉRATION
+// ============================================================
+function resetAgents() {
+  [1,2,3,4].forEach(n=>{
+    document.getElementById('d'+n).className='agent-status-dot dot-idle';
+    document.getElementById('o'+n).textContent=n===1?'En attente du lancement...':n===2?'En attente d\'ARIA...':n===3?'En attente de MARCUS...':'En attente de LÉNA...';
+    document.getElementById('o'+n).className='ai-output';
+    document.getElementById('ag'+n).className='agent-step';
+    if(n===3){document.getElementById('dl-actions').style.display='none';}
+    if(n===4){document.getElementById('v4').disabled=true;}
+  });
+  document.getElementById('v1').disabled=true;
+  document.getElementById('v2').disabled=true;
+  S.ao={};
+}
+
+async function runA(n) {
+  const off=document.getElementById('g-off').value.trim();
+  const ent=document.getElementById('g-ent').value.trim();
+  const p=gP();
+  if (!off&&n===1) { ntf('Entrez une offre d\'abord', 'err'); return; }
+
+  const step=document.getElementById('ag'+n);
+  step.classList.add('running');
+  document.getElementById('b'+n).classList.add('open');
+  document.getElementById('d'+n).className='agent-status-dot dot-run';
+  const out=document.getElementById('o'+n);
+  out.textContent=''; out.className='ai-output ld';
+
+  let pr='';
+  const agentName=['','ARIA','MARCUS','LÉNA','VICTOR'][n];
+
+  if (n===1) pr=`Tu es ARIA, agent d'analyse d'offres. Analyse cette offre en français avec clarté et précision:
+- Poste exact, entreprise, lieu, type de contrat
+- 5 missions principales
+- 5 compétences/qualités clés recherchées
+- Logiciels mentionnés
+- Culture d'entreprise perceptible
+- Points de vigilance pour le candidat
+
+Offre: ${off}`;
+
+  else if (n===2) pr=`Tu es MARCUS, agent de matching. Évalue la compatibilité entre ce profil et cette offre.
+
+Profil candidat:
+Nom: ${p.nom||'Candidat'} | Poste visé: ${p.poste||''}
+Formation: ${p.diplome||''} — ${p.ecole||''} (${p.annee||''})
+Bio: ${p.bio||''}
+Logiciels: ${(p.log||[]).join(', ')}
+Compétences: ${(p.cmp||[]).join(', ')}
+Langues: ${(p.lng||[]).join(', ')}
+
+Analyse de l'offre (ARIA):
+${S.ao[1]||''}
+
+Fournis:
+1. Score de compatibilité /100 avec justification détaillée
+2. ✅ Points forts du candidat pour ce poste
+3. ⚠️ Points faibles ou lacunes
+4. 🎯 Recommandation: POSTULER / POSTULER AVEC ADAPTATION / ÉVITER`;
+
+  else if (n===3) pr=`Tu es LÉNA, experte en rédaction de candidatures françaises pour la comptabilité.
+
+Profil:
+${p.nom||'Candidat'} | ${p.ville||''} | ${p.email||''}
+Tél: ${p.tel||''} | LinkedIn: ${p.linkedin||''}
+Formation: ${p.diplome||''} — ${p.ecole||''} (${p.annee||''})
+Axes DCG: ${(p.axes||[]).join(' / ')}
+Logiciels: ${(p.log||[]).join(', ')}
+Compétences: ${(p.cmp||[]).join(', ')}
+Bio: ${p.bio||''}
+
+Offre cible: ${ent||'l\'entreprise'}
+Analyse MARCUS: ${S.ao[2]||''}
+Notes: ${document.getElementById('g-not').value}
+
+Rédige EXACTEMENT:
+--- ACCROCHE CV ---
+(3 lignes percutantes, adaptées à cette offre)
+
+--- LETTRE DE MOTIVATION ---
+(4 paragraphes: accroche forte / pourquoi cette entreprise / compétences clés / appel à l'action clair)
+
+Ton professionnel, direct, sans formules creuses.`;
+
+  else if (n===4) pr=`Tu es VICTOR, agent de contrôle qualité.
+
+Vérifie cette candidature complète:
+
+OFFRE: ${off}
+ENTREPRISE: ${ent}
+
+CONTENU RÉDIGÉ PAR LÉNA:
+${S.ao[3]||''}
+
+MATCHING MARCUS:
+${S.ao[2]||''}
+
+Fournis:
+1. Score de confiance final /100
+2. ✅ Forces de cette candidature
+3. ⚠️ Points à améliorer avant envoi
+4. ✉️ Verdict: ENVOYER / RÉVISER D'ABORD / NE PAS ENVOYER
+5. Conseil final en 1 phrase`;
+
+  try {
+    const res = await claude(pr, n===3?2000:1200);
+    S.ao[n]=res;
+    out.className='ai-output'; out.textContent=res;
+    step.className='agent-step done';
+    document.getElementById('d'+n).className='agent-status-dot dot-done';
+    if(n===1){document.getElementById('v1').disabled=false;}
+    if(n===2){document.getElementById('v2').disabled=false;}
+    if(n===3){
+      const dl=document.getElementById('dl-actions');
+      dl.style.display='flex';
+      S.st.cv++; document.getElementById('s-cv').textContent=S.st.cv;
+    }
+    if(n===4){document.getElementById('v4').disabled=false;}
+    act(agentName+' — terminé pour '+ent, n===3?'violet':n===2?'amber':'cyan');
+    ntf(agentName+' a terminé ✓', 'ok');
+  } catch(e) {
+    out.className='ai-output'; out.textContent='❌ Erreur: '+e.message;
+    step.className='agent-step';
+    document.getElementById('d'+n).className='agent-status-dot dot-err';
+    ntf('Erreur '+agentName+': '+e.message.substring(0,60), 'err');
+  }
+}
+
+function editA(n) {
+  const o=document.getElementById('o'+n);
+  const old=o.textContent;
+  o.innerHTML=`<textarea style="width:100%;min-height:130px;font-size:13px;background:rgba(0,0,0,0.3);color:var(--text);border:1px solid var(--border2);border-radius:6px;padding:10px">${old}</textarea><button class="btn btn-success btn-sm" style="margin-top:8px" onclick="saveA(${n})"><i class='ti ti-check'></i> Sauvegarder</button>`;
+}
+
+function saveA(n) {
+  const ta=document.querySelector('#o'+n+' textarea'); if(!ta)return;
+  const v=ta.value; S.ao[n]=v;
+  const o=document.getElementById('o'+n); o.className='ai-output'; o.textContent=v;
+  document.getElementById('d'+n).className='agent-status-dot dot-done';
+  if(n===1)document.getElementById('v1').disabled=false;
+  if(n===2)document.getElementById('v2').disabled=false;
+  if(n===4)document.getElementById('v4').disabled=false;
+  ntf('Modification sauvegardée ✓', 'ok');
+}
+
+function finalize() {
+  const e=document.getElementById('g-ent').value||'Entreprise';
+  const t=document.getElementById('g-off').value.split('\n')[0].substring(0,60)||'Poste';
+  S.cands.push({titre:t,ent:e,st:'ap',date:new Date().toLocaleDateString('fr-FR')});
+  S.st.ca++; document.getElementById('s-ca').textContent=S.st.ca;
+  upPipe();
+  document.getElementById('em-ent').value=e;
+  act('Candidature finalisée: '+e,'green');
+  ntf('Ajouté au pipeline ! Passez à SOFIA pour l\'email.', 'ok');
+  showPage('email');
+}
+
+function dlPDF(t) {
+  const {jsPDF}=window.jspdf; const doc=new jsPDF(); const p=gP();
+  const content=S.ao[3]||'Aucun contenu généré.';
+  const ent=document.getElementById('g-ent').value||'Entreprise';
+  doc.setFillColor(7,11,20); doc.rect(0,0,210,297,'F');
+  doc.setTextColor(0,212,255); doc.setFont('helvetica','bold'); doc.setFontSize(18);
+  doc.text(t==='cv'?'CURRICULUM VITAE':'LETTRE DE MOTIVATION',20,20);
+  doc.setTextColor(180,200,240); doc.setFont('helvetica','normal'); doc.setFontSize(11);
+  const lines=doc.splitTextToSize(content,170);
+  doc.text(lines,20,35);
+  doc.save((t==='cv'?'CV_':'LM_')+(p.nom||'').replace(' ','_')+'_'+ent+'.pdf');
+  ntf(t==='cv'?'CV téléchargé ✓':'Lettre téléchargée ✓','ok');
+}
+
+// ============================================================
+// SOFIA — EMAIL
+// ============================================================
+async function findContact() {
+  const e=document.getElementById('em-ent').value.trim();
+  const s=document.getElementById('em-sit').value.trim();
+  if (!e) { ntf('Entrez une entreprise', 'err'); return; }
+  const el=document.getElementById('ct-res');
+  el.innerHTML='<div class="ai-output ld" style="font-size:13px">SOFIA recherche un contact</div>';
+  try {
+    const res=await claude('Pour l\'entreprise "'+e+'"'+(s?' (site: '+s+')':'')+', donne en français:\n1. Formats email probables (prénom.nom@domaine.fr etc)\n2. Adresses RH génériques (recrutement@, rh@...)\n3. Conseils pour trouver le bon contact sur LinkedIn\nSois précis et pratique.');
+    el.innerHTML=`<div class="card"><div class="card-title"><i class="ti ti-user-check"></i>Contact — ${e}</div><div class="ai-output">${res}</div></div>`;
+    act('SOFIA — contact recherché pour '+e,'cyan');
+  } catch(err) { el.innerHTML='<div class="card" style="color:var(--red)">Erreur: '+err.message+'</div>'; }
+}
+
+async function genEmail() {
+  const p=gP(); const e=document.getElementById('em-ent').value||'l\'entreprise';
+  try {
+    const res=await claude(`Tu es SOFIA, agente de communication professionnelle.
+Rédige un email de candidature percutant (150-200 mots max).
+
+Candidat: ${p.nom||''} | ${p.poste||'alternance comptabilité'} | ${p.ville||'Paris'}
+Entreprise: ${e}
+
+Structure:
+- Ligne "Objet:" (accrocheuse, personnalisée)
+- Accroche forte et personnalisée sur l'entreprise
+- Profil en 2 phrases (expérience + formation)
+- Demande d'entretien directe et confiante
+- Formule de politesse professionnelle
+
+Ton: direct, confiant, professionnel. Zéro formule creuse.`);
+    const lines=res.split('\n');
+    const ol=lines.find(l=>/^objet\s*:/i.test(l.trim()));
+    if(ol) document.getElementById('em-sub').value=ol.replace(/^objet\s*:\s*/i,'').trim();
+    document.getElementById('em-bod').value=res;
+    S.st.em++; document.getElementById('s-em').textContent=S.st.em;
+    act('SOFIA — email rédigé pour '+e,'cyan');
+    ntf('SOFIA a rédigé l\'email ✓','ok');
+  } catch(err) { ntf('Erreur: '+err.message,'err'); }
+}
+
+function openMail() {
+  const to=document.getElementById('em-to').value;
+  const sub=encodeURIComponent(document.getElementById('em-sub').value);
+  const bod=encodeURIComponent(document.getElementById('em-bod').value);
+  if (!to) { ntf('Entrez un email destinataire','err'); return; }
+  window.location.href='mailto:'+to+'?subject='+sub+'&body='+bod;
+  ntf('Ouverture de Mail...','ok');
+}
+
+function copyEmail() {
+  navigator.clipboard.writeText(document.getElementById('em-sub').value+'\n\n'+document.getElementById('em-bod').value)
+    .then(()=>ntf('Email copié ✓','ok')).catch(()=>ntf('Erreur copie','err'));
+}
+
+// ============================================================
+// PIPELINE
+// ============================================================
+function upPipe() {
+  const cols=[['ap','À postuler'],['po','Postulé'],['re','Relance'],['en','Entretien'],['rf','Refus']];
+  let total=0;
+  cols.forEach(([k])=>{
+    const el=document.getElementById('c-'+k);
+    const cnt=document.getElementById('cnt-'+k);
+    const items=S.cands.filter(c=>c.st===k);
+    el.innerHTML='';
+    if (!items.length) { el.innerHTML='<div style="font-size:11px;color:var(--muted2);text-align:center;padding:10px">Vide</div>'; }
+    items.forEach(c=>{
+      const d=document.createElement('div'); d.className='pipe-item';
+      d.innerHTML=`<div class="pipe-item-title">${c.titre||'Poste'}</div><div class="pipe-item-co">${c.ent||''}</div><div class="pipe-item-date">${c.date}</div>
+      <select style="margin-top:7px;font-size:11px;padding:4px 6px" onchange="mvPipe(${S.cands.indexOf(c)},this.value)">
+        <option value="ap"${c.st==='ap'?' selected':''}>À postuler</option>
+        <option value="po"${c.st==='po'?' selected':''}>Postulé</option>
+        <option value="re"${c.st==='re'?' selected':''}>Relance</option>
+        <option value="en"${c.st==='en'?' selected':''}>Entretien</option>
+        <option value="rf"${c.st==='rf'?' selected':''}>Refus</option>
+      </select>`;
+      el.appendChild(d); total++;
+    });
+    cnt.textContent=items.length;
+  });
+  document.getElementById('s-ca').textContent=S.cands.filter(c=>c.st!=='rf').length;
+  document.getElementById('badge-pipe').textContent=total;
+}
+
+function mvPipe(i,st) { S.cands[i].st=st; upPipe(); }
+
+// ============================================================
+// ACTIVITY
+// ============================================================
+function act(msg, color='cyan') {
+  const el=document.getElementById('d-act');
+  if (el.querySelector('.empty')) el.innerHTML='';
+  const d=document.createElement('div'); d.className='activity-item';
+  const colors={cyan:'var(--cyan)',amber:'var(--amber)',green:'var(--green)',violet:'var(--violet)',pink:'#EC4899'};
+  d.innerHTML=`<div class="activity-dot" style="background:${colors[color]||'var(--cyan)'}"></div>${msg}<span class="activity-time">${new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>`;
+  el.insertBefore(d, el.firstChild);
+  if (el.children.length > 10) el.removeChild(el.lastChild);
+}
+
+// ============================================================
+// INIT
+// ============================================================
+initSupabase();
+upPipe();
+</script>
+</body>
+</html>
