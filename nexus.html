@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root {
@@ -705,141 +704,32 @@ label:first-child{margin-top:0}
 
 <script>
 // ============================================================
-// CONFIG — à remplir après création Supabase
+// CONFIG
 // ============================================================
-const SUPABASE_URL = 'https://yugyxmzlocqfvkwasgub.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl1Z3l4bXpsb2NxZnZrd2FzZ3ViIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyNzYwMzAsImV4cCI6MjA5Njg1MjAzMH0.chcY1YU4aXx3KwW__2tn-TWJwFTKJdw7cgr';
-// ANTHROPIC_KEY is read dynamically in claude()
-
-let _supabase = null;
-let currentUser = null;
-
-function initSupabase() {
-  if (typeof window.supabase !== 'undefined') {
-    _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-  }
-}
-
-// ============================================================
-// AUTH — Email + Password via Supabase
-// ============================================================
-let pendingEmail = '';
-let authMode = 'login';
-
-function toggleAuthMode() {
-  authMode = authMode === 'login' ? 'signup' : 'login';
-  const isSignup = authMode === 'signup';
-  document.getElementById('auth-mode-title').textContent = isSignup ? 'Créer un compte' : 'Connexion';
-  document.getElementById('auth-mode-sub').textContent = isSignup ? 'Rejoignez NEXUS en quelques secondes.' : 'Accédez à votre espace NEXUS.';
-  document.getElementById('btn-auth-main').textContent = isSignup ? 'Créer mon compte →' : 'Se connecter →';
-  document.getElementById('field-confirm').style.display = isSignup ? 'block' : 'none';
-  document.querySelector('.auth-link').innerHTML = isSignup
-    ? 'Déjà un compte ? <span onclick="toggleAuthMode()">Se connecter</span>'
-    : 'Pas de compte ? <span onclick="toggleAuthMode()">Créer un compte</span>';
-}
-
-async function doAuth() {
-  const email = document.getElementById('auth-email').value.trim();
-  const pwd = document.getElementById('auth-pwd').value;
-  if (!email || !email.includes('@')) { showAuthErr('Adresse email invalide'); return; }
-  if (!pwd || pwd.length < 6) { showAuthErr('Mot de passe trop court (6 caractères min)'); return; }
-  const btn = document.getElementById('btn-auth-main');
-  btn.disabled = true; btn.textContent = 'Chargement...';
-
-  if (_supabase) {
-    if (authMode === 'signup') {
-      const pwd2 = document.getElementById('auth-pwd2').value;
-      if (pwd !== pwd2) { showAuthErr('Les mots de passe ne correspondent pas'); btn.disabled=false; btn.textContent='Créer mon compte →'; return; }
-      const { data, error } = await _supabase.auth.signUp({ email, password: pwd });
-      if (error) { showAuthErr(error.message); btn.disabled=false; btn.textContent='Créer mon compte →'; return; }
-      currentUser = data.user;
-      showAuthOk('Compte créé avec succès !');
-      setTimeout(launchApp, 800);
-    } else {
-      const { data, error } = await _supabase.auth.signInWithPassword({ email, password: pwd });
-      if (error) { showAuthErr('Email ou mot de passe incorrect'); btn.disabled=false; btn.textContent='Se connecter →'; return; }
-      currentUser = data.user;
-      launchApp();
-    }
-  } else {
-    // Mode local sans Supabase
-    currentUser = { email, id: 'local-' + email };
-    launchApp();
-  }
-  btn.disabled = false;
-}
-
-async function checkExistingSession() {
-  if (!_supabase) return;
-  const { data } = await _supabase.auth.getSession();
-  if (data.session) {
-    currentUser = data.session.user;
-    launchApp();
-  }
-}
-
-function showAuthErr(msg) {
-  const el = document.getElementById('auth-err-email');
-  el.textContent = msg; el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 5000);
-}
-
-function showAuthOk(msg) {
-  const el = document.getElementById('auth-ok-email');
-  el.textContent = msg; el.style.display = 'block';
-}
-
-function launchApp() {
+// Clé API Anthropic stockée dynamiquement
+function getKey() {
   if (!localStorage.getItem('nx_ant_key')) {
     const _k = ['sk-ant-api03-b6Cuzc9VSkmqOXUMXcI0kG-D6d32VSeZBstcS9D6h6zKNNJZM1KzgcN2feKC4Hk0SJjAIN4lMjZeeGCn', 'ylHeuQ-nC2W-wAA'].join('');
     localStorage.setItem('nx_ant_key', _k);
   }
-  document.getElementById('auth-screen').style.display = 'none';
-  document.getElementById('app').classList.add('visible');
-  const em = currentUser.email;
-  document.getElementById('u-em').textContent = em;
-  document.getElementById('u-av').textContent = em.charAt(0).toUpperCase();
-  loadSavedProfile();
-  loadFromCloud();
-  ntf('Bienvenue ' + em.split('@')[0] + ' !', 'nok');
+  return localStorage.getItem('nx_ant_key');
 }
 
-async function logout() {
+// ============================================================
+// AUTH — supprimée, accès direct
+// ============================================================
+function logout() {
   saveProfile();
-  await saveToCloud();
-  if (_supabase) await _supabase.auth.signOut();
-  currentUser = null;
-  document.getElementById('auth-screen').style.display = 'flex';
-  document.getElementById('app').classList.remove('visible');
-  document.getElementById('auth-email').value = '';
-  document.getElementById('auth-pwd').value = '';
-  ntf('Déconnecté — travaux sauvegardés ✓', 'nfo');
+  localStorage.removeItem('nx_p');
+  location.reload();
 }
 
 async function saveToCloud() {
-  if (!_supabase || !currentUser || !S.prof) return;
-  try {
-    await _supabase.from('profiles').upsert({
-      user_id: currentUser.id,
-      email: currentUser.email,
-      profil: JSON.stringify(S.prof),
-      candidatures: JSON.stringify(S.cands),
-      stats: JSON.stringify(S.st),
-      updated_at: new Date().toISOString()
-    }, { onConflict: 'user_id' });
-  } catch(e) {}
+  saveProfile();
 }
 
 async function loadFromCloud() {
-  if (!_supabase || !currentUser) return;
-  try {
-    const { data } = await _supabase.from('profiles').select('profil,candidatures,stats').eq('user_id', currentUser.id).single();
-    if (data) {
-      if (data.profil) { const p = JSON.parse(data.profil); localStorage.setItem('nx_p', JSON.stringify(p)); loadSavedProfile(); ntf('Profil synchronisé depuis le cloud ✓', 'nok'); }
-      if (data.candidatures) { S.cands = JSON.parse(data.candidatures); upPipe(); }
-      if (data.stats) { S.st = JSON.parse(data.stats); updateStats(); }
-    }
-  } catch(e) {}
+  loadSavedProfile();
 }
 
 function updateStats() {
@@ -961,10 +851,6 @@ function saveProfile() {
     log:[...S.tags.log], lng:[...S.tags.lng], cmp:[...S.tags.cmp], axes:[...S.axes]
   };
   try { localStorage.setItem('nx_p', JSON.stringify(S.prof)); } catch(e){}
-  // Sync Supabase
-  if (_supabase && currentUser) {
-    _supabase.from('profiles').upsert({ user_id: currentUser.id, email: currentUser.email, data: S.prof }).then(()=>{});
-  }
   ntf('Profil sauvegardé ✓', 'ok');
 }
 
@@ -1034,7 +920,7 @@ async function claude(prompt, maxTokens=1500) {
     method:'POST',
     headers:{
       'Content-Type':'application/json',
-      'x-api-key': localStorage.getItem('nx_ant_key') || '',
+      'x-api-key': getKey(),
       'anthropic-version':'2023-06-01',
       'anthropic-dangerous-direct-browser-access':'true'
     },
@@ -1454,8 +1340,15 @@ function act(msg, color='cyan') {
 // ============================================================
 // INIT
 // ============================================================
-initSupabase();
+// Lancement direct sans auth
+getKey();
+document.getElementById('auth-screen').style.display = 'none';
+document.getElementById('app').classList.add('visible');
+document.getElementById('u-em').textContent = 'riyad.bcf.2@gmail.com';
+document.getElementById('u-av').textContent = 'R';
+loadSavedProfile();
 upPipe();
+ntf('Bienvenue sur NEXUS ⚡', 'ok');
 </script>
 </body>
 </html>
